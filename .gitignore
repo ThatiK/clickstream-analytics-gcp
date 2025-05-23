@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.env
+.env
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# dbt
+target/
+dbt_modules/
+logs/
+
+# Airflow
+airflow.cfg
+logs/
+*.db
+
+# VSCode
+.vscode/
+
+# MacOS
+.DS_Store
