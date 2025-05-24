@@ -2,6 +2,7 @@
 
 A portfolio project to build a production-grade, modular data pipeline for analyzing real-world clickstream data using Spark, Airflow, dbt, and Terraform on Google Cloud Platform (GCP).
 
+
 ## Project Objectives
 
 - Process and sessionize raw web logs from E commerce datasets
@@ -28,6 +29,19 @@ Clickstream analytics provides critical insights into user behavior, session act
 ## Architecture Overview
 
 ![Clickstream Architecture](docs/architecture.png)
+
+
+## Project Management: Tracked in Plane
+
+This project was fully managed using [Plane](https://app.plane.so/data-engineering-lab/projects/ccac21e9-0819-4691-b9fe-6df5ef4a0060/issues), an open-source project and issue tracking tool.
+
+Modules:
+- Project Foundation & Tooling
+- Data Ingestion & Processing
+- CI/CD & GCP Deployment
+- Infrastructure & Governance
+- Data Modeling with dbt
+- Insights & Visualization
 
 
 ## Personas & Roles
