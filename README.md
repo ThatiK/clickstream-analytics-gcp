@@ -35,13 +35,10 @@ Clickstream analytics provides critical insights into user behavior, session act
 
 This project was fully managed using [Plane](https://app.plane.so/data-engineering-lab/projects/ccac21e9-0819-4691-b9fe-6df5ef4a0060/issues), an open-source project and issue tracking tool.
 
-Modules:
-- Project Foundation & Tooling
-- Data Ingestion & Processing
-- CI/CD & GCP Deployment
-- Infrastructure & Governance
-- Data Modeling with dbt
-- Insights & Visualization
+![Plane Modules](docs/plane/plane_modules.png)
+
+![Plane Board](docs/plane/plane_board.png)
+
 
 
 ## Personas & Roles
