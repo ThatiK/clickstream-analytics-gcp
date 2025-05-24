@@ -27,12 +27,7 @@ Clickstream analytics provides critical insights into user behavior, session act
 
 ## Architecture Overview
 
-
-User Logs → GCS (Raw) → PySpark (Sessionize) → GCS (Staging) → dbt → BigQuery (Marts) → Dashboard
-                                ↓
-                           Orchestrated by Airflow
-                                ↓
-                Deployed via GitHub Actions + Terraform
+![Clickstream Architecture](docs/architecture.png)
 
 
 ## Personas & Roles
