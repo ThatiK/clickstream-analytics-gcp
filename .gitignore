@@ -3,24 +3,39 @@ __pycache__/
 *.py[cod]
 *.env
 .env
+*.pyc
+
+# data
+data/
+
+# Docker volumes
+pgdata/
+data/output/
+data/tmp/
 
 # Terraform
 *.tfstate
 *.tfstate.*
 .terraform/
 
-# dbt
-target/
-dbt_modules/
-logs/
-
 # Airflow
-airflow.cfg
 logs/
-*.db
+airflow.cfg
+unittest.cfg
 
-# VSCode
+# dbt local
+dbt_packages/
+dbt_modules/
+target/
+dbt_profiles.yml
+.user.yml
+
+# VS Code / MacOS
 .vscode/
+.DS_Store
 
 # MacOS
 .DS_Store
+
+## Random
+commands.txt

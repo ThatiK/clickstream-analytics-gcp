@@ -1,0 +1,11 @@
+name: caec
+version: '1.0'
+config-version: 2
+
+profile: caec
+
+model-paths: ["models"]
+
+# Optional
+target-path: "target"
+clean-targets: ["target", "dbt_modules"]

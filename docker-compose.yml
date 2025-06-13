@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:13
+    container_name: caec_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  airflow:
+    image: apache/airflow:2.7.2
+    container_name: caec_airflow
+    depends_on:
+      - postgres
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      AIRFLOW__CORE__FERNET_KEY: ''
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    volumes:
+      - ./dags:/opt/airflow/dags
+    ports:
+      - "8080:8080"
+    command: >
+      bash -c "
+        airflow db upgrade &&
+        airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com &&
+        airflow scheduler & airflow webserver
+      "
+
+  spark:
+    image: bitnami/spark:3.5.0
+    container_name: caec_spark
+    environment:
+      - SPARK_MODE=master
+    volumes:
+      - ./data:/data
+    ports:
+      - "8081:8081"
+
+  dbt:
+    image: ghcr.io/dbt-labs/dbt-postgres:1.7.5
+    container_name: caec_dbt
+    entrypoint: ["/bin/sh", "-c"]
+    volumes:
+      - ./dbt:/usr/app/dbt
+      - ./dbt/profiles:/root/.dbt
+    working_dir: /usr/app
+    command: ["while true; do sleep 3600; done"]
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:
