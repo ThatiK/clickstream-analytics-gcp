@@ -5,6 +5,9 @@ __pycache__/
 .env
 *.pyc
 
+# data
+data/
+
 # Docker volumes
 pgdata/
 data/output/
