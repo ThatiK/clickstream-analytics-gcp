@@ -25,6 +25,7 @@ dbt_packages/
 dbt_modules/
 target/
 dbt_profiles.yml
+.user.yml
 
 # VS Code / MacOS
 .vscode/
