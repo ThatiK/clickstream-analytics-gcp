@@ -41,9 +41,12 @@ services:
     environment:
       - SPARK_MODE=master
     volumes:
-      - ./data:/data
+      - ./src:/usr/app/src
+      - ./data:/usr/app/data
+    working_dir: /usr/app
     ports:
-      - "8081:8081"
+      - "8088:8080"   # Remap Spark Master UI to localhost:8088
+      - "4044:4040"   # Spark App UI for DAGs
 
   dbt:
     image: ghcr.io/dbt-labs/dbt-postgres:1.7.5

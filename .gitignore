@@ -37,5 +37,9 @@ dbt_profiles.yml
 # MacOS
 .DS_Store
 
-## Random
+# Random
 commands.txt
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+notebooks/
