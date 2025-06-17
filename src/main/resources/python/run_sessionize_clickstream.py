@@ -26,7 +26,7 @@ def submit_spark_job(env="dev"):
 
     spark_submit_cmd = [
         "spark-submit",
-        "--master", props["SPARK"]["master"],
+        "--master", "local[*]",
         spark_script_path,
         props["PATHS"]["clean_events"],
         props["PATHS"]["sessionized_events"],

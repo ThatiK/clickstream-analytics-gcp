@@ -1,5 +1,6 @@
 import sys
 import logging
+import argparse
 
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
@@ -42,8 +43,13 @@ def get_spark():
 
 
 if __name__ == '__main__':
-    input_path = sys.argv[1]
-    output_path = sys.argv[2]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--input-path', required=True)
+    parser.add_argument('--output-path', required=True)
+    args = parser.parse_args()
+
+    input_path = args.input_path
+    output_path = args.output_path
 
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)

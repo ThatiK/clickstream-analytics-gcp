@@ -39,6 +39,7 @@ dbt_profiles.yml
 
 # Random
 commands.txt
+keys/
 
 # Jupyter Notebooks
 .ipynb_checkpoints/

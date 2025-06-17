@@ -1,6 +1,7 @@
 import sys
 import logging
 import time
+import argparse
 
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
@@ -61,9 +62,15 @@ def get_spark():
 
 
 if __name__ == '__main__':
-    input_path = sys.argv[1]
-    output_path = sys.argv[2]
-    session_gap = int(sys.argv[3]) * 60 # in seconds
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--input-path', required=True)
+    parser.add_argument('--output-path', required=True)
+    parser.add_argument('--session-gap', required=True)
+    args = parser.parse_args()
+
+    input_path = args.input_path
+    output_path = args.output_path
+    session_gap = int(args.session_gap) * 60 # in seconds
 
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
@@ -73,6 +80,7 @@ if __name__ == '__main__':
 
     logger.info("INPUT PATH: {}".format(input_path))
     logger.info("OUTPUT PATH: {}".format(output_path))
+    logger.info("SESSION GAP IN SECONDS: {}".format(session_gap))
 
     spark = get_spark()
 

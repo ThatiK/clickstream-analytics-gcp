@@ -14,26 +14,51 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  airflow:
-    image: apache/airflow:2.7.2
-    container_name: caec_airflow
+  airflow-webserver:
+    image: apache/airflow:2.9.1
+    container_name: caec_airflow_webserver
     depends_on:
       - postgres
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
-      AIRFLOW__CORE__FERNET_KEY: ''
       AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__WEBSERVER__PORT: 8080
+      AIRFLOW__LOGGING__REMOTE_LOGGING: 'False'
+      AIRFLOW__LOGGING__BASE_LOG_FOLDER: /opt/airflow/logs
+      AIRFLOW__LOGGING__DAG_PROCESSOR_MANAGER_LOG_LOCATION: /opt/airflow/logs/dag_processor_manager/dag_processor_manager.log
+      CAEC_ENV : "prod"
     volumes:
-      - ./dags:/opt/airflow/dags
+      - ./src/main/resources/airflow/dags:/opt/airflow/dags
+      - ./src/main/resources/spark:/usr/app/src/main/resources/spark
+      - ./src/main/resources/etc:/usr/app/src/main/resources/etc
+      - ./requirements.txt:/requirements.txt
+      - ./data/logs/airflow:/opt/airflow/logs
+      - ./keys/caec-airflow-sa.json:/keys/caec-airflow-sa.json
     ports:
       - "8080:8080"
-    command: >
-      bash -c "
-        airflow db upgrade &&
-        airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com &&
-        airflow scheduler & airflow webserver
-      "
+    command: bash -c "pip install -r /requirements.txt && airflow db upgrade && airflow users create --username admin --password admin --firstname admin --lastname admin --role Admin --email admin@example.com && airflow webserver"
+
+  airflow-scheduler:
+    image: apache/airflow:2.9.1
+    container_name: caec_airflow_scheduler
+    depends_on:
+      - postgres
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      AIRFLOW__LOGGING__REMOTE_LOGGING: 'False'
+      AIRFLOW__LOGGING__BASE_LOG_FOLDER: /opt/airflow/logs
+      AIRFLOW__LOGGING__DAG_PROCESSOR_MANAGER_LOG_LOCATION: /opt/airflow/logs/dag_processor_manager/dag_processor_manager.log
+      CAEC_ENV : "prod"
+    volumes:
+      - ./src/main/resources/airflow/dags:/opt/airflow/dags
+      - ./src/main/resources/spark:/usr/app/src/main/resources/spark
+      - ./src/main/resources/etc:/usr/app/src/main/resources/etc
+      - ./data/logs/airflow:/opt/airflow/logs
+      - ./requirements.txt:/requirements.txt
+      - ./keys/caec-airflow-sa.json:/keys/caec-airflow-sa.json
+    command: bash -c "pip install -r /requirements.txt && airflow scheduler"
 
   spark:
     image: bitnami/spark:3.5.0
