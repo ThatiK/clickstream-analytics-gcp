@@ -27,7 +27,9 @@ def sessionize(input_path, output_path, session_gap):
 
     df = df.withColumn("session_id", concat_ws("_", col("visitorid"), col("session_number")))
 
-    df.write.mode("overwrite").partitionBy("event_date").parquet(output_path)
+    df = df.withColumn("event_date_part", col("event_date"))
+
+    df.write.mode("overwrite").partitionBy("event_date_part").parquet(output_path)
 
 
 def get_spark():

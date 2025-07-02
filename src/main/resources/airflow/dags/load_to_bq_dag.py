@@ -2,6 +2,8 @@ import os
 import uuid
 import configparser
 from datetime import datetime, timedelta
+import subprocess
+from urllib.parse import urlparse
 
 from airflow import DAG
 from airflow.operators.dummy import DummyOperator
@@ -9,7 +11,6 @@ from airflow.utils.task_group import TaskGroup
 from airflow.operators.python import PythonOperator
 from airflow.providers.google.cloud.operators.dataproc import DataprocCreateBatchOperator
 from airflow.providers.google.cloud.transfers.local_to_gcs import LocalFilesystemToGCSOperator
-
 
 def failure_callback(context):
     dag_run = context.get("dag_run")
@@ -28,6 +29,17 @@ def log_trigger_info(**context):
         print(f"[INFO] Execution Date: {dag_run.execution_date}")
     else:
         print("[INFO] DAG run context is missing.")
+
+
+def parse_gcs_path(gcs_uri):
+    if not gcs_uri.startswith("gs://"):
+        raise ValueError("Invalid GCS URI")
+
+    parsed = urlparse(gcs_uri)
+    bucket = parsed.netloc
+    prefix = parsed.path.lstrip("/")
+
+    return prefix
 
 log_trigger_metadata = PythonOperator(
     task_id="log_trigger_metadata",
@@ -49,19 +61,25 @@ REGION = config.get("COMMON", "region")
 BUCKET = config.get("COMMON", "bucket")
 SERVICE_ACCOUNT = config.get("COMMON", "sa_de_email")
 
-CLEAN_EVENTS_PATH = config.get("PATHS", "clean_events")
+
 SESSIONIZED_EVENTS_PATH = config.get("PATHS", "sessionized_events")
-SESSION_GAP_MINUTES = config.get("SETTINGS", "session_gap_minutes")
+BASE_PREFIX = parse_gcs_path(SESSIONIZED_EVENTS_PATH)
+
+BQ_DATASET = config.get("BQ", "dataset_staging")
+BQ_TABLE = config.get("BQ", "table_sessionized")
+BQ_TABLE_PARTITION_FIELD = config.get("BQ", "table_sessionized_partition_field")
+
 
 # ----------------------
 # Script Paths
 # ----------------------
-SCRIPT_LOCAL_PATH = "/usr/app/src/main/resources/spark/sessionize_clickstream.py"
-SCRIPT_GCS_PATH = "jobs/sessionize_clickstream.py"
+SCRIPT_LOCAL_PATH = "/usr/app/src/main/resources/python/gcs_to_bq_loader.py"
+SCRIPT_GCS_PATH = "jobs/gcs_to_bq_loader.py"
 SCRIPT_GCS_URI = f"gs://{BUCKET}/{SCRIPT_GCS_PATH}"
 
-BASE_BATCH_NAME = "caec-sessionize-clickstream"
+BASE_BATCH_NAME = "caec-load-to-bq-clickstream"
 BATCH_NAME = generate_timestamped_batch_name(BASE_BATCH_NAME)
+
 
 # ----------------------
 # DAG Definition
@@ -74,7 +92,7 @@ default_args = {
 }
 
 with DAG(
-    dag_id="caec_sessionize_clickstream_dag",
+    dag_id="caec_load_to_bq_dag",
     default_args=default_args,
     schedule_interval=None,
     catchup=False,
@@ -84,41 +102,35 @@ with DAG(
     start = DummyOperator(task_id="start")
     end = DummyOperator(task_id="end")
 
-    with TaskGroup("upload_and_submit_job", tooltip="Upload and Submit Spark Job") as group:
 
-        # Upload the Spark script to GCS
-        upload_script = LocalFilesystemToGCSOperator(
-            task_id="upload_sessionize_script",
-            src=SCRIPT_LOCAL_PATH,
-            dst=SCRIPT_GCS_PATH,
-            bucket=BUCKET,
-            mime_type="text/x-python"
-        )
+    def run_gcs_to_bq_loader():
+        # Define CLI args for the script
+        args = [
+            "python3",
+            SCRIPT_LOCAL_PATH,
+            "--bucket_name", BUCKET,
+            "--base_prefix", BASE_PREFIX,
+            "--dataset", BQ_DATASET,
+            "--table", BQ_TABLE,
+            "--partition_field", BQ_TABLE_PARTITION_FIELD
+        ]
 
-        # Submit Dataproc Serverless batch job
-        submit_batch = DataprocCreateBatchOperator(
-            task_id="submit_sessionize_batch",
-            batch={
-                "pyspark_batch": {
-                    "main_python_file_uri": SCRIPT_GCS_URI,
-                    "args": [
-                        "--input-path", CLEAN_EVENTS_PATH,
-                        "--output-path", SESSIONIZED_EVENTS_PATH,
-                        "--session-gap", SESSION_GAP_MINUTES
-                    ]
-                },
-                "environment_config": {
-                    "execution_config": {
-                        "service_account": SERVICE_ACCOUNT
-                    }
-                }
-            },
-            batch_id=BATCH_NAME,
-            region=REGION,
-            project_id=PROJECT_ID,
-            gcp_conn_id="google_cloud_default"
-        )
+        env = os.environ.copy()
+        env["GOOGLE_APPLICATION_CREDENTIALS"] = "/keys/caec-data-eng-sa.json"
 
-        upload_script >> submit_batch
+        result = subprocess.run(args, capture_output=True, text=True, env=env)
+        print("STDOUT:", result.stdout)
+        print("STDERR:", result.stderr)
 
-    start >> log_trigger_metadata >> group >> end
+        if result.returncode != 0:
+            raise Exception("gcs_to_bq_loader.py failed")
+
+    load_to_bq = PythonOperator(
+        task_id='load_sessionized_to_bq',
+        python_callable=run_gcs_to_bq_loader
+    )
+
+    load_to_bq
+        
+
+    start >> log_trigger_metadata >> load_to_bq >> end

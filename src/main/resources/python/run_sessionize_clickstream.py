@@ -28,9 +28,9 @@ def submit_spark_job(env="dev"):
         "spark-submit",
         "--master", "local[*]",
         spark_script_path,
-        props["PATHS"]["clean_events"],
-        props["PATHS"]["sessionized_events"],
-        props["SETTINGS"]["session_gap_minutes"]
+        "--input-path", props["PATHS"]["clean_events"],
+        "--output-path", props["PATHS"]["sessionized_events"],
+        "--session-gap", props["SETTINGS"]["session_gap_minutes"]
     ]
 
     logger.info("Launching Spark Job")

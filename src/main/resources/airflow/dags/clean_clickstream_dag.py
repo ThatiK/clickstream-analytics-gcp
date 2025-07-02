@@ -33,7 +33,7 @@ config.read(CONFIG_PATH)
 PROJECT_ID = config.get("COMMON", "project_id")
 REGION = config.get("COMMON", "region")
 BUCKET = config.get("COMMON", "bucket")
-SERVICE_ACCOUNT = config.get("COMMON", "sa_airflow_email")
+SERVICE_ACCOUNT = config.get("COMMON", "sa_de_email")
 
 RAW_EVENTS_PATH = config.get("PATHS", "raw_events")
 CLEAN_EVENTS_PATH = config.get("PATHS", "clean_events")
