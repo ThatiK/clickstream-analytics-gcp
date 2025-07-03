@@ -31,10 +31,11 @@ services:
     volumes:
       - ./src/main/resources/airflow/dags:/opt/airflow/dags
       - ./src/main/resources/spark:/usr/app/src/main/resources/spark
+      - ./src/main/resources/python:/usr/app/src/main/resources/python
       - ./src/main/resources/etc:/usr/app/src/main/resources/etc
       - ./requirements.txt:/requirements.txt
       - ./data/logs/airflow:/opt/airflow/logs
-      - ./keys/caec-airflow-sa.json:/keys/caec-airflow-sa.json
+      - ./keys/caec-data-eng-sa.json:/keys/caec-data-eng-sa.json
     ports:
       - "8080:8080"
     command: bash -c "pip install -r /requirements.txt && airflow db upgrade && airflow users create --username admin --password admin --firstname admin --lastname admin --role Admin --email admin@example.com && airflow webserver"
@@ -54,10 +55,11 @@ services:
     volumes:
       - ./src/main/resources/airflow/dags:/opt/airflow/dags
       - ./src/main/resources/spark:/usr/app/src/main/resources/spark
+      - ./src/main/resources/python:/usr/app/src/main/resources/python
       - ./src/main/resources/etc:/usr/app/src/main/resources/etc
       - ./data/logs/airflow:/opt/airflow/logs
       - ./requirements.txt:/requirements.txt
-      - ./keys/caec-airflow-sa.json:/keys/caec-airflow-sa.json
+      - ./keys/caec-data-eng-sa.json:/keys/caec-data-eng-sa.json
     command: bash -c "pip install -r /requirements.txt && airflow scheduler"
 
   spark:
@@ -74,16 +76,17 @@ services:
       - "4044:4040"   # Spark App UI for DAGs
 
   dbt:
-    image: ghcr.io/dbt-labs/dbt-postgres:1.7.5
+    image: caec-dbt:1.9-bq
     container_name: caec_dbt
     entrypoint: ["/bin/sh", "-c"]
+    command: ["while true; do sleep 3600; done"]
+    working_dir: /usr/app
     volumes:
       - ./dbt:/usr/app/dbt
       - ./dbt/profiles:/root/.dbt
-    working_dir: /usr/app
-    command: ["while true; do sleep 3600; done"]
-    depends_on:
-      - postgres
+      - ./keys:/usr/app/keys
+    env_file:
+      - .env
 
 volumes:
   pgdata:

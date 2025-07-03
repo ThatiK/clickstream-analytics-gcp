@@ -1,4 +1,4 @@
-caec:
+default_postgres:
   target: dev
   outputs:
     dev:
@@ -10,3 +10,16 @@ caec:
       dbname: airflow
       schema: dbt
       threads: 1
+    
+# SET env vars in .env file 
+caec_bigquery:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: service-account
+      project: "{{ env_var('CAEC_PROJECT_ID') }}"
+      dataset: caec_staging  
+      location: "{{ env_var('CAEC_REGION')}}"
+      threads: 4
+      keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS')}}"

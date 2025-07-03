@@ -17,31 +17,75 @@ module "gcs_bucket" {
 #  cluster_name = var.dataproc_cluster_name
 #}
 
-module "caec_airflow_sa" {
+### IAM ###
+
+module "sa_data_eng" {
   source       = "./modules/iam/service_account"
-  display_name  = "CAEC Airflow Service Account"
   project_id   = var.project_id
-  account_id   = "caec-airflow-sa"
-  description  = "Used by Airflow to run Spark jobs, access GCS and BigQuery"
-  iam_roles    = [
-    "roles/dataproc.editor",
-    "roles/dataproc.worker",
-    "roles/storage.objectAdmin",
+  account_id   = "caec-data-eng-sa"
+  display_name = "CAEC Data Engineer SA"
+  iam_roles = [
     "roles/bigquery.dataEditor",
-    "roles/bigquery.jobUser",
-    "roles/logging.logWriter"
+    "roles/bigquery.jobUser",      
+    "roles/storage.objectViewer", 
+    "roles/storage.objectCreator",
+    "roles/dataproc.editor",      
+    "roles/dataproc.worker",      
+    "roles/logging.logWriter",    
   ]
 }
 
-module "caec_dbt_sa" {
-  source       = "./modules/iam/service_account"
-  project_id   = var.project_id
-  account_id   = "caec-dbt-sa"
-  display_name = "CAEC dbt Service Account"
-  description  = "Used by dbt to run models on BigQuery"
-  iam_roles    = [
-    "roles/bigquery.dataEditor",
-    "roles/bigquery.jobUser"
-  ]
+#module "sa_analyst" {
+#  source       = "./modules/iam/service_account"
+#  project_id   = var.project_id
+#  account_id   = "caec-analyst-sa"
+#  display_name = "CAEC Data Analyst SA"
+#  roles = {
+#    "roles/bigquery.dataViewer" = "Read-only access to modeled data"
+#  }
+#}
+#
+#module "sa_steward" {
+#  source       = "./modules/iam/service_account"
+#  project_id   = var.project_id
+#  account_id   = "caec-steward-sa"
+#  display_name = "CAEC Data Steward SA"
+#  roles = {
+#    "roles/bigquery.metadataViewer" = "Can inspect table schemas"
+#    "roles/datacatalog.viewer"      = "Can view data catalog entries"
+#    "roles/viewer"                  = "Basic viewer rights for audit"
+#  }
+#}
+
+
+### BIG QUERY ###
+
+module "bq_staging" {
+  source      = "./modules/bigquery_dataset"
+  dataset_id  = "caec_staging"
+  description = "Cleaned raw data models"
+  labels = {
+    layer = "staging"
+    owner = "data-engineering"
+  }
 }
 
+module "bq_warehouse" {
+  source      = "./modules/bigquery_dataset"
+  dataset_id  = "caec_warehouse"
+  description = "Fact and dimension models"
+  labels = {
+    layer = "warehouse"
+    owner = "data-engineering"
+  }
+}
+
+module "bq_marts" {
+  source      = "./modules/bigquery_dataset"
+  dataset_id  = "caec_marts"
+  description = "Reporting marts"
+  labels = {
+    layer = "marts"
+    owner = "data-engineering"
+  }
+}

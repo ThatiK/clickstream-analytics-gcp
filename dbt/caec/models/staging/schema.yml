@@ -1,0 +1,20 @@
+version: 2
+
+models:
+  - name: stg_sessionized_events
+    description: "Staging model for sessionized clickstream data"
+    columns:
+      - name: session_id
+        description: "Session identifier"
+        tests:
+          - not_null
+
+      - name: visitor_id
+        description: "User identifier"
+        tests:
+          - not_null
+
+      - name: event_time
+        description: "Timestamp of the event"
+        tests:
+          - not_null
