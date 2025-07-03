@@ -1,0 +1,38 @@
+version: 2
+
+models:
+  - name: dim_users
+    description: "Unique users extracted from sessionized clickstream events"
+    columns:
+      - name: visitor_id
+        tests:
+          - not_null
+          - unique
+
+  - name: fct_events
+    description: "Fact table containing one row per event"
+    columns:
+      - name: event_time
+        tests:
+          - not_null
+      - name: event_type
+        tests:
+          - not_null
+      - name: session_id
+        tests:
+          - not_null
+  
+  - name: fct_sessions
+    description: "Aggregated metrics per session"
+    columns:
+      - name: session_id
+        tests:
+          - not_null
+          - unique
+      - name: session_start_time
+        tests:
+          - not_null
+      - name: event_count
+        tests:
+          - not_null
+
