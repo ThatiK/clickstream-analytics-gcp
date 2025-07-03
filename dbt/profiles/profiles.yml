@@ -19,7 +19,7 @@ caec_bigquery:
       type: bigquery
       method: service-account
       project: "{{ env_var('CAEC_PROJECT_ID') }}"
-      dataset: caec_staging  
+      dataset: caec
       location: "{{ env_var('CAEC_REGION')}}"
       threads: 4
       keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS')}}"

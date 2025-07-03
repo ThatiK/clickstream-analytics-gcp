@@ -1,0 +1,42 @@
+version: 2
+
+models:
+  - name: dim_users
+    description: "Dimension table with one row per unique visitor"
+    columns:
+      - name: visitor_id
+        description: "User identifier from clickstream"
+        tests:
+          - not_null
+          - unique
+
+  - name: fct_events
+    description: "Fact table containing one row per clickstream event"
+    columns:
+      - name: event_time
+        description: "Timestamp of the event"
+        tests: [not_null]
+      - name: event_type
+        description: "Type of the event"
+        tests: [not_null]
+      - name: session_id
+        description: "Session identifier"
+        tests: [not_null]
+  
+  - name: fct_sessions
+    description: "Fact table with one row per user session"
+    columns:
+      - name: session_id
+        description: "Unique session identifier"
+        tests: [not_null, unique]
+      - name: session_start_time
+        description: "Start time of the session"
+        tests: [not_null]
+      - name: event_count
+        description: "Number of events in the session"
+        tests: [not_null]
+      - name: first_event
+        description: "First event in the session"
+      - name: last_event
+        description: "Last event in the session"
+

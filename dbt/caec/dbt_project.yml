@@ -12,7 +12,10 @@ macro-paths: ["macros"]
 models:
   caec:
     staging:
+      +schema: staging
       +materialized: view
     marts:
+      +schema: analytics
       +materialized: table
+      
 

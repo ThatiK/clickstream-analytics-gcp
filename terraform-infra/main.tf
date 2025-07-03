@@ -82,7 +82,7 @@ module "bq_warehouse" {
 
 module "bq_marts" {
   source      = "./modules/bigquery_dataset"
-  dataset_id  = "caec_marts"
+  dataset_id  = "caec_analytics"
   description = "Reporting marts"
   labels = {
     layer = "marts"
