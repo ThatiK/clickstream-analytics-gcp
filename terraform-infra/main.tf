@@ -1,64 +1,120 @@
 provider "google" {
   project = var.project_id
   region  = var.region
+  credentials = file("${path.module}/../keys/caec-ops-sa.json")
 }
 
-module "gcs_bucket" {
-  source      = "./modules/gcs_bucket"
-  project_id  = var.project_id
-  bucket_name = var.gcs_bucket_name
-  location    = var.region
+###################
+### ENABLE APIS ###
+###################
+
+module "enable_apis" {
+  source     = "./modules/project_apis"
+  project_id = var.project_id
+  apis = [
+    "compute.googleapis.com",
+    "iam.googleapis.com",
+    "cloudresourcemanager.googleapis.com",
+    "bigquery.googleapis.com",
+    "storage.googleapis.com",
+    "composer.googleapis.com",
+    "artifactregistry.googleapis.com",
+    "dataproc.googleapis.com",
+    "logging.googleapis.com",
+    "monitoring.googleapis.com"
+  ]
 }
 
-#module "dataproc_cluster" {
-#  source       = "./modules/dataproc_cluster"
-#  project_id   = var.project_id
-#  region       = var.region
-#  cluster_name = var.dataproc_cluster_name
-#}
 
+###########
+### GCS ###
+###########
+
+module "data_bucket" {
+  source         = "./modules/gcs_bucket"
+  bucket_name    = var.gcs_bucket_data
+  location       = var.region
+  project_id     = var.project_id
+}
+
+module "dags_bucket" {
+  source          = "./modules/gcs_bucket"
+  bucket_name     = var.gcs_bucket_dags
+  location        = var.region
+  project_id      = var.project_id
+}
+
+module "scripts_bucket" {
+  source         = "./modules/gcs_bucket"
+  bucket_name    = var.gcs_bucket_scripts
+  location       = var.region
+  project_id     = var.project_id
+}
+
+module "artifacts_bucket" {
+  source         = "./modules/gcs_bucket"
+  bucket_name    = var.gcs_bucket_artifacts
+  location       = var.region
+  project_id     = var.project_id
+}
+
+
+
+###########
 ### IAM ###
+###########
+
+module "sa_ops" {
+  source         = "./modules/iam/service_account"
+  project_id     = var.project_id
+  account_id     = "caec-ops-sa"
+  display_name   = "CAEC Operations Support Service Account"
+  iam_roles      = [
+    "roles/resourcemanager.projectIamAdmin",
+    "roles/storage.admin",
+    "roles/bigquery.admin",
+    "roles/composer.admin",
+    "roles/iam.serviceAccountAdmin",
+    "roles/artifactregistry.admin",
+    "roles/compute.networkAdmin",
+    "roles/serviceusage.serviceUsageAdmin",
+    "roles/iam.serviceAccountUser"
+  ]
+}
 
 module "sa_data_eng" {
   source       = "./modules/iam/service_account"
   project_id   = var.project_id
   account_id   = "caec-data-eng-sa"
-  display_name = "CAEC Data Engineer SA"
-  iam_roles = [
+  display_name = "CAEC Data Engineer Service Account"
+  iam_roles    = [
     "roles/bigquery.dataEditor",
     "roles/bigquery.jobUser",      
     "roles/storage.objectViewer", 
     "roles/storage.objectCreator",
     "roles/dataproc.editor",      
     "roles/dataproc.worker",      
-    "roles/logging.logWriter",    
+    "roles/logging.logWriter",   
+    "roles/composer.worker"
   ]
 }
 
-#module "sa_analyst" {
-#  source       = "./modules/iam/service_account"
-#  project_id   = var.project_id
-#  account_id   = "caec-analyst-sa"
-#  display_name = "CAEC Data Analyst SA"
-#  roles = {
-#    "roles/bigquery.dataViewer" = "Read-only access to modeled data"
-#  }
-#}
-#
-#module "sa_steward" {
-#  source       = "./modules/iam/service_account"
-#  project_id   = var.project_id
-#  account_id   = "caec-steward-sa"
-#  display_name = "CAEC Data Steward SA"
-#  roles = {
-#    "roles/bigquery.metadataViewer" = "Can inspect table schemas"
-#    "roles/datacatalog.viewer"      = "Can view data catalog entries"
-#    "roles/viewer"                  = "Basic viewer rights for audit"
-#  }
-#}
+module "sa_analyst" {
+  source       = "./modules/iam/service_account"
+  project_id   = var.project_id
+  account_id   = "caec-analyst-sa"
+  display_name = "CAEC Data Analyst Service Account"
+  iam_roles    = [
+    "roles/bigquery.dataViewer",
+    "roles/storage.objectViewer"
+  ]
+}
 
 
+
+#################
 ### BIG QUERY ###
+#################
 
 module "bq_staging" {
   source      = "./modules/bigquery_dataset"
@@ -88,4 +144,61 @@ module "bq_marts" {
     layer = "marts"
     owner = "data-engineering"
   }
+}
+
+
+###################
+### ARTIFACTORY ###
+###################
+module "artifact_registry" {
+  source        = "./modules/artifact_registry"
+  location      = var.region
+  repository_id = var.repository_id
+  description   = "Docker images for CAEC CI/CD"
+}
+
+
+################
+### COMPOSER ###
+################
+
+# Required for Composer V2 creation: grant composer service agent extended permissions
+resource "google_project_iam_member" "composer_service_agent_ext" {
+  project = var.project_id
+  role    = "roles/composer.ServiceAgentV2Ext"
+  member  = "serviceAccount:service-${var.project_number}@cloudcomposer-accounts.iam.gserviceaccount.com"
+}
+
+# Composer SA can act as data-eng-sa
+resource "google_service_account_iam_member" "composer_can_act_as_data_eng" {
+  service_account_id = module.sa_data_eng.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:service-${var.project_number}@cloudcomposer-accounts.iam.gserviceaccount.com"
+}
+
+# ops-sa can act as data-eng-sa
+resource "google_service_account_iam_member" "ops_can_act_as_data_eng" {
+  service_account_id = module.sa_data_eng.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = "serviceAccount:${module.sa_ops.email}"
+}
+
+module "composer_env" {
+  source                = "./modules/composer_env"
+  project_id            = var.project_id
+  region                = var.region
+  env_name              = var.composer_env_name
+  dag_bucket            = var.gcs_bucket_dags
+  worker_service_account = module.sa_data_eng.email
+
+  image_version         = var.composer_image_version
+
+  env_variables = {
+    CAEC_PROJECT_ID = var.project_id
+    CAEC_REGION     = var.region
+    CAEC_BUCKET     = var.gcs_bucket_data
+    CAEC_SA_EMAIL   = module.sa_data_eng.email
+  }
+
+  depends_on = [module.enable_apis]
 }
