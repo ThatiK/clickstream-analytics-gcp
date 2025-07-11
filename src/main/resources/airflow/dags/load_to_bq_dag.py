@@ -14,7 +14,7 @@ BQ_DATASET      = os.getenv("CAEC_BQ_DATASET", "caec_analytics")
 ENV             = os.getenv("CAEC_ENV")                    
 
 
-GCS_SOURCE_URI  = f"gs://{SCRIPTS_BUCKET}/caec/sessionized/events/event_date_part={{ ds_nodash }}/*.parquet"
+GCS_SOURCE_URI  = f"gs://{SCRIPTS_BUCKET}/sessionized/events/event_date_part={{ ds_nodash }}/*.parquet"
 
 BQ_TABLE        = f"{PROJECT_ID}.{BQ_DATASET}.clickstream_sessions"
 
@@ -22,8 +22,8 @@ default_args = {
     "owner": "caec",
     "email_on_failure": False,
     "email_on_retry": False,
-    "retries": 1,
-    "retry_delay": timedelta(minutes=10),
+    #"retries": 1,
+    #"retry_delay": timedelta(minutes=10),
 }
 
 with DAG(
