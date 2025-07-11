@@ -1,29 +1,26 @@
-
 name: WIF sanity-check
 on: { workflow_dispatch: {} }
 
-permissions:               
+permissions:
   id-token: write
   contents: read
 
 jobs:
-  auth:
-    uses: ./.github/workflows/_auth.yml
-    with:
-      service_account: "caec-ops-sa@eternal-channel-457606-h5.iam.gserviceaccount.com"
-    secrets: inherit      # forwards all repo secrets declared in _auth.yml
-
   smoke:
-    needs: auth
     runs-on: ubuntu-latest
     steps:
+      - id: 'auth'
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account:           "caec-ops-sa@eternal-channel-457606-h5.iam.gserviceaccount.com"
+
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
       - name: Show active account
-        run:  gcloud auth list
+        run: gcloud auth list
 
-      - name: List CAEC scripts bucket
-        run:  gsutil ls -b gs://caec-scripts
-
-      - name: Touch & delete an object
-        run: |
-          echo "hello WIF" | gsutil cp - gs://caec-scripts/tmp/wif-test.txt
-          gsutil rm gs://caec-scripts/tmp/wif-test.txt
+      - name: List bucket
+        run: gsutil ls -b gs://caec-scripts
