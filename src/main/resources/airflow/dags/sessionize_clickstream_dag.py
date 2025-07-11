@@ -15,6 +15,14 @@ ENV          = os.getenv("CAEC_ENV")
 SPARK_MAIN   = f"gs://{SCRIPTS_BKT}/spark/sessionize.py"
 PROPS_URI    = f"gs://{SCRIPTS_BKT}/etc/{ENV}.properties"
 
+def generate_timestamped_batch_name(base_name):
+    ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+    return f"{base_name}-{ts}"
+
+BASE_BATCH_NAME = "caec-sessionize-clickstream"
+BATCH_NAME = generate_timestamped_batch_name(BASE_BATCH_NAME)
+
+
 default_args = {
     "owner": "caec",
     "depends_on_past": False,
@@ -51,7 +59,7 @@ with DAG(
                 }
             },
         },
-        batch_id="caec-sessionize-{{ ts_nodash }}",        # unique per run (includes H M S)
+        batch_id=BATCH_NAME,        # unique per run (includes H M S)
         region=REGION,
         project_id=PROJECT_ID,
     )

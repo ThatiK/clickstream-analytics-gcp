@@ -16,6 +16,13 @@ ENV          = os.getenv("CAEC_ENV")                # "prod" | "dev"
 SPARK_MAIN   = f"gs://{SCRIPTS_BKT}/spark/clean_clickstream.py"
 PROPS_URI    = f"gs://{SCRIPTS_BKT}/etc/{ENV}.properties"
 
+def generate_timestamped_batch_name(base_name):
+    ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+    return f"{base_name}-{ts}"
+
+BASE_BATCH_NAME = "caec-clean-clickstream"
+BATCH_NAME = generate_timestamped_batch_name(BASE_BATCH_NAME)
+
 # Default DAG args
 default_args = {
     "owner": "caec",
@@ -54,7 +61,7 @@ with DAG(
                 }
             },
         },
-        batch_id="caec-clean-{{ ts_nodash }}",
+        batch_id=BASE_BATCH_NAME,
         region=REGION,
         project_id=PROJECT_ID,
     )

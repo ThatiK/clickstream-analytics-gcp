@@ -15,8 +15,14 @@ ENV             = os.getenv("CAEC_ENV")
 
 
 GCS_SOURCE_URI  = f"gs://{SCRIPTS_BUCKET}/sessionized/events/event_date_part={{ ds_nodash }}/*.parquet"
-
 BQ_TABLE        = f"{PROJECT_ID}.{BQ_DATASET}.clickstream_sessions"
+
+def generate_timestamped_batch_name(base_name):
+    ts = datetime.now().strftime("%Y%m%d-%H%M%S")
+    return f"{base_name}-{ts}"
+
+BASE_BATCH_NAME = "caec-load-to-bq-clickstream"
+BATCH_NAME = generate_timestamped_batch_name(BASE_BATCH_NAME)
 
 default_args = {
     "owner": "caec",
@@ -37,16 +43,16 @@ with DAG(
 
     start = DummyOperator(task_id="start")
 
-    # ─── Load from GCS into BigQuery ───────────────────────────
+    # Load from GCS into BigQuery
     load_to_bq = GCSToBigQueryOperator(
         task_id="gcs_to_bq",
         bucket=SCRIPTS_BUCKET,
         source_objects=[f"sessionized/events/event_date_part={{ ds_nodash }}/*.parquet"],
         destination_project_dataset_table=BQ_TABLE,
         source_format="PARQUET",
-        write_disposition="WRITE_TRUNCATE",          # or WRITE_APPEND
+        write_disposition="WRITE_TRUNCATE",          
         time_partitioning={"type": "DAY"},
-        gcp_conn_id="google_cloud_default",          # Composer’s default conn uses workload SA
+        gcp_conn_id="google_cloud_default",          
     )
 
     end = DummyOperator(task_id="end")
