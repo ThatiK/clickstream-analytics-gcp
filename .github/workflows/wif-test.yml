@@ -2,6 +2,10 @@
 name: WIF sanity-check
 on: { workflow_dispatch: {} }
 
+permissions:               
+  id-token: write
+  contents: read
+
 jobs:
   auth:
     uses: ./.github/workflows/_auth.yml
