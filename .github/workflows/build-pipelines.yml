@@ -34,7 +34,8 @@ jobs:
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      #- uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
       #- id: build
       #  uses: google-github-actions/build@v0
       #  with:
