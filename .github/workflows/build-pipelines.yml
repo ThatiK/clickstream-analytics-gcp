@@ -1,0 +1,49 @@
+name: Build & Push pipeline image + Upload scripts
+on:
+  push:
+    branches: [ "master" ]
+    paths:
+      - "src/main/resources/python/**"
+      - "src/main/resources/spark/**"
+      - "src/main/resources/etc/**"
+      - ".github/workflows/build-pipeline.yml"
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+      packages: write
+
+    steps:
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account:           ${{ secrets.GCP_OPS_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - uses: actions/checkout@v4
+
+      - id: build
+        uses: google-github-actions/build@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          substitutions: _IMAGE_TAG=${{ github.sha }}
+          images: ${{ secrets.GCP_ARTIFACT_REPO }}/crawler:${{ github.sha }}
+
+      - name: Upload Spark & Python scripts
+        run: |
+          gsutil -m rsync -r src/main/resources/spark   gs://${{ secrets.GCP_SCRIPTS_BUCKET }}/spark
+          gsutil -m rsync -r src/main/resources/python  gs://${{ secrets.GCP_SCRIPTS_BUCKET }}/python

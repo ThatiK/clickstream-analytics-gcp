@@ -1,0 +1,44 @@
+name: Terraform — CAEC infra
+on:
+  pull_request:
+    paths: [ "terraform-infra/**" ]
+  push:
+    branches: [ "master" ]
+    paths:   [ "terraform-infra/**" ]
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write        
+  contents: read
+  pull-requests: write   # so plan can be commented (optional)
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    steps:
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account:           ${{ secrets.GCP_OPS_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - uses: actions/checkout@v4
+
+      - name: Terraform fmt / validate / plan
+        working-directory: terraform-infra
+        run: |
+          terraform fmt -check
+          terraform init -input=false
+          terraform validate
+          terraform plan -no-color -input=false -out=tfplan
+
+      # auto-apply only on main
+      - name: Terraform apply
+        if: github.ref == 'refs/heads/main'
+        working-directory: terraform-infra
+        run: terraform apply -auto-approve -input=false tfplan

@@ -1,0 +1,41 @@
+name: dbt run / test
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "30 2 * * *"     # 02:30 UTC daily
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  dbt:
+    runs-on: ubuntu-latest
+
+    steps:
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account:           ${{ secrets.GCP_DATAENG_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+
+      - name: Install dbt-bigquery
+        run: pip install dbt-bigquery==1.8.0
+
+      - name: Write profiles.yml from secret
+        run: |
+          mkdir -p ~/.dbt
+          echo "${{ secrets.DBT_PROFILES }}" > ~/.dbt/profiles.yml
+
+      - run: dbt deps
+      - run: dbt run   --fail-fast
+      - run: dbt test  --fail-fast
