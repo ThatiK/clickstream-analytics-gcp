@@ -33,7 +33,7 @@ variable "composer_env_name" {
 }
 
 variable "composer_image_version" {
-  default = "composer-2.13.5-airflow-2.10.5"
+  default = "composer-2.13.6-airflow-2.9.3"
 }
 
 #variable "dataproc_cluster_name" {

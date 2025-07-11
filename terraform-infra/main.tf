@@ -13,8 +13,10 @@ module "enable_apis" {
   project_id = var.project_id
   apis = [
     "compute.googleapis.com",
+    "container.googleapis.com",
     "iam.googleapis.com",
     "cloudresourcemanager.googleapis.com",
+    "cloudtrace.googleapis.com",
     "bigquery.googleapis.com",
     "storage.googleapis.com",
     "composer.googleapis.com",
@@ -88,14 +90,24 @@ module "sa_data_eng" {
   account_id   = "caec-data-eng-sa"
   display_name = "CAEC Data Engineer Service Account"
   iam_roles    = [
+    # BigQuery / Storage / Spark roles 
     "roles/bigquery.dataEditor",
-    "roles/bigquery.jobUser",      
-    "roles/storage.objectViewer", 
+    "roles/bigquery.jobUser",
+    "roles/storage.objectViewer",
     "roles/storage.objectCreator",
-    "roles/dataproc.editor",      
-    "roles/dataproc.worker",      
-    "roles/logging.logWriter",   
-    "roles/composer.worker"
+    "roles/dataproc.editor",
+    "roles/dataproc.worker",
+
+    # Composer-specific runtime roles
+    "roles/composer.worker",
+    "roles/artifactregistry.reader",
+    "roles/logging.logWriter",
+    "roles/monitoring.metricWriter",
+    "roles/cloudtrace.agent",
+
+    # GKE node roles ──
+    "roles/container.defaultNodeServiceAccount",
+    "roles/container.nodeServiceAccount"
   ]
 }
 
@@ -198,7 +210,9 @@ module "composer_env" {
     CAEC_REGION     = var.region
     CAEC_BUCKET     = var.gcs_bucket_data
     CAEC_SA_EMAIL   = module.sa_data_eng.email
-  }
+  } 
+  
+  env_size = "ENVIRONMENT_SIZE_SMALL"
 
   depends_on = [module.enable_apis]
 }
