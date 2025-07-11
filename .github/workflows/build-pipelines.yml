@@ -42,7 +42,15 @@ jobs:
       #    substitutions: _IMAGE_TAG=${{ github.sha }}
       #    images: ${{ secrets.GCP_ARTIFACT_REPO }}/caec-events-processor:${{ github.sha }}
 
+      - name: Show repo tree
+        run: |
+          echo "::group::tree"
+          tree -L 3 src || true
+          echo "::endgroup::"
+
+
       - name: Upload Spark & Python scripts
         run: |
-          gsutil -m rsync -r ./src/main/resources/spark   gs://${{ secrets.GCP_SCRIPTS_BUCKET }}/spark
-          gsutil -m rsync -r ./src/main/resources/python  gs://${{ secrets.GCP_SCRIPTS_BUCKET }}/python
+          gsutil -m rsync -r src/main/resources/spark/   gs://${{ secrets.GCP_SCRIPTS_BUCKET }}/spark
+          gsutil -m rsync -r src/main/resources/python/  gs://${{ secrets.GCP_SCRIPTS_BUCKET }}/python
+          gsutil -m rsync -r src/main/resources/etc/  gs://${{ secrets.GCP_SCRIPTS_BUCKET }}/etc
