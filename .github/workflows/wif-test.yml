@@ -1,0 +1,25 @@
+name: WIF sanity-check
+on:
+  workflow_dispatch: {}          # runs only when you click “Run workflow” in Actions
+
+jobs:
+  auth:
+    uses: ./.github/workflows/_auth.yml       # the shared auth wrapper you built
+    with:
+      service_account: ${{ secrets.GCP_OPS_SA }}
+    secrets: inherit
+
+  smoke:
+    needs: auth
+    runs-on: ubuntu-latest
+    steps:
+      - name: Show active account
+        run:  gcloud auth list
+
+      - name: List buckets (should succeed)
+        run:  gsutil ls -b gs://${{ secrets.CAEC_SCRIPTS_BUCKET }}
+
+      - name: Touch a temp object and delete it
+        run: |
+          echo "hello WIF" | gsutil cp - gs://${{ secrets.CAEC_SCRIPTS_BUCKET }}/tmp/wif-test.txt
+          gsutil rm gs://${{ secrets.CAEC_SCRIPTS_BUCKET }}/tmp/wif-test.txt
