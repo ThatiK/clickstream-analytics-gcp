@@ -55,10 +55,10 @@ with DAG(
             },
             "runtime_config": {
                 "properties": {
-                    "spark.executor.instances": "2",
-                    "spark.executor.cores":     "2",
-                    "spark.driver.cores":       "1",
-                    "spark.executor.memory":    "4g",
+                    "spark.executor.instances": "1",
+                    "spark.executor.cores":     "4",
+                    "spark.driver.cores":       "4",
+                    "spark.executor.memory":    "8g",
                     "spark.driver.memory":      "2g",
                 }
             },
