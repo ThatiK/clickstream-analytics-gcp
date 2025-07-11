@@ -17,6 +17,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v4
+      # inject the tfvars from a secret
+      - name: Write prod.tfvars from secret
+        run: |
+          echo "${{ secrets.GCP_TFVARS_B64 }}" | base64 -d > terraform-infra/prod.auto.tfvars
+
       - id: auth
         uses: google-github-actions/auth@v2
         with:
@@ -31,21 +37,13 @@ jobs:
         with:
           terraform_version: 1.8.4 
       
-      - uses: actions/checkout@v4
-
-      # inject the tfvars from a secret
-      - name: Write prod.tfvars from secret
-        run: |
-          echo "${{ secrets.GCP_TFVARS_B64 }}" | base64 -d > terraform-infra/prod.auto.tfvars
-      
-
-      - name: Confirm tfvars present
-        run: |
-          echo "=== tfvars sha256 ==="
-          sha256sum terraform-infra/prod.auto.tfvars
-          echo "--- first 5 lines (masked) ---"
-          head -n 5 terraform-infra/prod.auto.tfvars | sed 's/=.*/= ***** MASKED ***** /'
-        
+      #- name: Confirm tfvars present
+      #  run: |
+      #    echo "=== tfvars sha256 ==="
+      #    sha256sum terraform-infra/prod.auto.tfvars
+      #    echo "--- first 5 lines (masked) ---"
+      #    head -n 5 terraform-infra/prod.auto.tfvars | sed 's/=.*/= ***** MASKED ***** /'
+       
 
       - name: Terraform fmt / validate / plan
         working-directory: terraform-infra
