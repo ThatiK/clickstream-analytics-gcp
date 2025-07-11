@@ -1,123 +1,74 @@
-import os
 from datetime import datetime, timedelta
-import uuid
-import configparser
-
 from airflow import DAG
+from airflow.models import Variable
+from airflow.providers.google.cloud.operators.dataproc import (
+    DataprocCreateBatchOperator,
+)
+from airflow.providers.google.cloud.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.operators.dummy import DummyOperator
-from airflow.utils.task_group import TaskGroup
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator
-from airflow.providers.google.cloud.operators.dataproc import DataprocCreateBatchOperator
-from airflow.providers.google.cloud.transfers.local_to_gcs import LocalFilesystemToGCSOperator
 
+# Airflow Variables
+PROJECT_ID   = Variable.get("CAEC_PROJECT_ID")
+REGION       = Variable.get("CAEC_REGION")
+SCRIPTS_BKT  = Variable.get("CAEC_SCRIPTS_BUCKET")     # "caec-prod-scripts"
+ENV          = Variable.get("CAEC_ENV")                # "prod" | "dev"
 
-def failure_callback(context):
-    dag_run = context.get("dag_run")
-    task_instance = context.get("task_instance")
-    print(f"[ALERT] Task {task_instance.task_id} in DAG {dag_run.dag_id} failed.")
+# GCS URIs
+SPARK_MAIN   = f"gs://{SCRIPTS_BKT}/spark/clean_clickstream.py"
+PROPS_URI    = f"gs://{SCRIPTS_BKT}/etc/{ENV}.properties"
 
-def generate_timestamped_batch_name(base_name):
-    ts = datetime.now().strftime("%Y%m%d-%H%M%S")
-    return f"{base_name}-{ts}"
-
-
-# ----------------------
-# Load Config
-# ----------------------
-ENV = os.getenv("CAEC_ENV", "dev")  # default to dev
-CONFIG_PATH = f"/usr/app/src/main/resources/etc/{ENV}.properties"
-
-config = configparser.ConfigParser()
-config.read(CONFIG_PATH)
-
-PROJECT_ID = config.get("COMMON", "project_id")
-REGION = config.get("COMMON", "region")
-BUCKET = config.get("COMMON", "bucket")
-SERVICE_ACCOUNT = config.get("COMMON", "sa_de_email")
-
-RAW_EVENTS_PATH = config.get("PATHS", "raw_events")
-CLEAN_EVENTS_PATH = config.get("PATHS", "clean_events")
-
-# ----------------------
-# Script Paths
-# ----------------------
-SCRIPT_LOCAL_PATH = "/usr/app/src/main/resources/spark/clean_clickstream.py"
-SCRIPT_GCS_PATH = "jobs/clean_clickstream.py"
-SCRIPT_GCS_URI = f"gs://{BUCKET}/{SCRIPT_GCS_PATH}"
-
-BASE_BATCH_NAME = "caec-clean-clickstream"
-BATCH_NAME = generate_timestamped_batch_name(BASE_BATCH_NAME)
-
-# ----------------------
-# DAG Definition
-# ----------------------
+# Default DAG args
 default_args = {
-    'start_date': datetime(2025, 1, 1),
-    #'retries': 2,
-    #'retry_delay': timedelta(minutes=5),
-    'on_failure_callback': failure_callback,
+    "owner": "caec",
+    "depends_on_past": False,
+    "email_on_failure": False,
+    "email_on_retry": False,
+    "retries": 1,
+    "retry_delay": timedelta(minutes=10),
 }
 
-
-
-
-
-
-# ----------- Define DAG -----------
 with DAG(
     dag_id="caec_clean_clickstream_dag",
     default_args=default_args,
+    start_date=datetime(2025, 7, 1),
     schedule_interval=None,
     catchup=False,
     tags=["caec", "clickstream"],
 ) as dag:
-    
+
     start = DummyOperator(task_id="start")
-    end = DummyOperator(task_id="end")
 
-    with TaskGroup("upload_and_submit_job", tooltip="Upload and Submit Spark Job") as group:
-
-        # Upload the Spark script to GCS
-        upload_script = LocalFilesystemToGCSOperator(
-            task_id="upload_clean_clickstream_script",
-            src=SCRIPT_LOCAL_PATH,
-            dst=SCRIPT_GCS_PATH,
-            bucket=BUCKET,
-            mime_type="text/x-python"
-        )
-
-        # Submit Dataproc Serverless batch job
-        submit_batch = DataprocCreateBatchOperator(
-            task_id="submit_clean_clickstream_batch",
-            batch={
-                "pyspark_batch": {
-                    "main_python_file_uri": SCRIPT_GCS_URI,
-                    "args": [
-                        "--input", RAW_EVENTS_PATH,
-                        "--output", CLEAN_EVENTS_PATH
-                    ]
-                },
-                "environment_config": {
-                    "execution_config": {
-                        "service_account": SERVICE_ACCOUNT
-                    }
+    # ───── Dataproc Serverless batch task ─────────────────────────
+    clean_batch = DataprocCreateBatchOperator(
+        task_id="clean_clickstream_batch",
+        batch={
+            "pyspark_batch": {
+                "main_python_file_uri": SPARK_MAIN,
+                "python_file_uris": [PROPS_URI],          
+                "args": [
+                    "--conf", f"{ENV}",                   
+                ],
+            },
+            "environment_config": {
+                "execution_config": {
+                    "service_account": f"caec-data-eng-sa@{PROJECT_ID}.iam.gserviceaccount.com"
                 }
             },
-            batch_id=BATCH_NAME,
-            region=REGION,
-            project_id=PROJECT_ID,
-            gcp_conn_id="google_cloud_default"
-        )
-
-        upload_script >> submit_batch
+        },
+        batch_id="caec-clean-{{ ts_nodash }}",
+        region=REGION,
+        project_id=PROJECT_ID,
+    )
 
     trigger_sessionize = TriggerDagRunOperator(
         task_id="trigger_sessionize_dag",
         trigger_dag_id="caec_sessionize_clickstream_dag",
-        wait_for_completion=True,  
-        reset_dag_run=True,         
-        execution_date="{{ ds }}",  
+        wait_for_completion=True,
+        reset_dag_run=True,
+        execution_date="{{ ds }}",
     )
 
-    start >> group >> trigger_sessionize >> end
+    end = DummyOperator(task_id="end")
 
+    # DAG flow
+    start >> clean_batch >> trigger_sessionize >> end

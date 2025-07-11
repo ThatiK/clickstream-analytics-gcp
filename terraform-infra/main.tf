@@ -207,10 +207,12 @@ module "composer_env" {
   image_version = var.composer_image_version
 
   env_variables = {
-    CAEC_PROJECT_ID = var.project_id
-    CAEC_REGION     = var.region
-    CAEC_BUCKET     = var.gcs_bucket_data
-    CAEC_SA_EMAIL   = module.sa_data_eng.email
+    CAEC_PROJECT_ID     = var.project_id
+    CAEC_REGION         = var.region
+    CAEC_DATA_BUCKET    = var.gcs_bucket_data
+    CAEC_SA_EMAIL       = module.sa_data_eng.email
+    CAEC_SCRIPTS_BUCKET = var.gcs_bucket_scripts
+    CAEC_ENV            = var.composer_env
   }
 
   env_size = "ENVIRONMENT_SIZE_SMALL"
