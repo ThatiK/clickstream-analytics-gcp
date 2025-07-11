@@ -61,7 +61,7 @@ with DAG(
                 }
             },
         },
-        batch_id=BASE_BATCH_NAME,
+        batch_id=BATCH_NAME,
         region=REGION,
         project_id=PROJECT_ID,
     )
