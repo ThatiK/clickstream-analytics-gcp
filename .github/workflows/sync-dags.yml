@@ -1,0 +1,31 @@
+name: Sync DAGs to Composer
+on:
+  push:
+    branches: [ "master" ]
+    paths: [ "src/main/resources/airflow/**" ]
+  workflow_dispatch: {}
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  dag_sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account:           ${{ secrets.GCP_DATAENG_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - uses: actions/checkout@v4
+
+      - name: Rsync DAGs
+        run: |
+          gsutil -m rsync -r src/main/resources/airflow  gs://${{ secrets.GCP_COMPOSER_BUCKET }}
