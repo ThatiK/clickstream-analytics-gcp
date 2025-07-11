@@ -12,7 +12,7 @@ SCRIPTS_BKT  = os.getenv("CAEC_SCRIPTS_BUCKET")
 ENV          = os.getenv("CAEC_ENV")              
 
 # GCS URIs 
-SPARK_MAIN   = f"gs://{SCRIPTS_BKT}/spark/sessionize.py"
+SPARK_MAIN   = f"gs://{SCRIPTS_BKT}/spark/sessionize_clickstream.py"
 PROPS_URI    = f"gs://{SCRIPTS_BKT}/etc/{ENV}.properties"
 
 def generate_timestamped_batch_name(base_name):
