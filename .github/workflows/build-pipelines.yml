@@ -44,5 +44,5 @@ jobs:
 
       - name: Upload Spark & Python scripts
         run: |
-          gsutil -m rsync -r src/main/resources/spark   gs://${{ secrets.GCP_SCRIPTS_BUCKET }}/spark
-          gsutil -m rsync -r src/main/resources/python  gs://${{ secrets.GCP_SCRIPTS_BUCKET }}/python
+          gsutil -m rsync -r ./src/main/resources/spark   gs://${{ secrets.GCP_SCRIPTS_BUCKET }}/spark
+          gsutil -m rsync -r ./src/main/resources/python  gs://${{ secrets.GCP_SCRIPTS_BUCKET }}/python
