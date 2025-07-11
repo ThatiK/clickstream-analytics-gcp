@@ -35,13 +35,12 @@ jobs:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
       - uses: actions/checkout@v4
-
       - id: build
         uses: google-github-actions/build@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           substitutions: _IMAGE_TAG=${{ github.sha }}
-          images: ${{ secrets.GCP_ARTIFACT_REPO }}/crawler:${{ github.sha }}
+          images: ${{ secrets.GCP_ARTIFACT_REPO }}/caec-events-processor:${{ github.sha }}
 
       - name: Upload Spark & Python scripts
         run: |
