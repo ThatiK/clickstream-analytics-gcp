@@ -1,10 +1,8 @@
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.models import Variable
-from airflow.providers.google.cloud.operators.dataproc import (
-    DataprocCreateBatchOperator,
-)
-from airflow.providers.google.cloud.operators.trigger_dagrun import TriggerDagRunOperator
+from airflow.providers.google.cloud.operators.dataproc import DataprocCreateBatchOperator
+#from airflow.providers.google.cloud.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.operators.dummy import DummyOperator
 
 # Airflow Variables
@@ -38,7 +36,7 @@ with DAG(
 
     start = DummyOperator(task_id="start")
 
-    # ───── Dataproc Serverless batch task ─────────────────────────
+    # Dataproc Serverless batch task 
     clean_batch = DataprocCreateBatchOperator(
         task_id="clean_clickstream_batch",
         batch={
@@ -60,15 +58,15 @@ with DAG(
         project_id=PROJECT_ID,
     )
 
-    trigger_sessionize = TriggerDagRunOperator(
-        task_id="trigger_sessionize_dag",
-        trigger_dag_id="caec_sessionize_clickstream_dag",
-        wait_for_completion=True,
-        reset_dag_run=True,
-        execution_date="{{ ds }}",
-    )
+    #trigger_sessionize = TriggerDagRunOperator(
+    #    task_id="trigger_sessionize_dag",
+    #    trigger_dag_id="caec_sessionize_clickstream_dag",
+    #    wait_for_completion=True,
+    #    reset_dag_run=True,
+    #    execution_date="{{ ds }}",
+    #)
 
     end = DummyOperator(task_id="end")
 
     # DAG flow
-    start >> clean_batch >> trigger_sessionize >> end
+    start >> clean_batch >> end
