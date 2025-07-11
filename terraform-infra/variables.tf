@@ -41,5 +41,5 @@ variable "composer_image_version" {
 #}
 
 variable "github_repo" {
-  default = "ThatiK/clickstream-analytics-gcp" 
+  default = "ThatiK/clickstream-analytics-gcp"
 }

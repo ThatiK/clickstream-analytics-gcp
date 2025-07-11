@@ -1,6 +1,6 @@
 resource "google_composer_environment" "composer" {
-  name   = var.env_name
-  region = var.region
+  name    = var.env_name
+  region  = var.region
   project = var.project_id
 
   config {

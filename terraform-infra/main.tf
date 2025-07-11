@@ -1,6 +1,6 @@
 provider "google" {
-  project = var.project_id
-  region  = var.region
+  project     = var.project_id
+  region      = var.region
   credentials = file("${path.module}/../keys/caec-ops-sa.json")
 }
 
@@ -33,31 +33,31 @@ module "enable_apis" {
 ###########
 
 module "data_bucket" {
-  source         = "./modules/gcs_bucket"
-  bucket_name    = var.gcs_bucket_data
-  location       = var.region
-  project_id     = var.project_id
+  source      = "./modules/gcs_bucket"
+  bucket_name = var.gcs_bucket_data
+  location    = var.region
+  project_id  = var.project_id
 }
 
 module "dags_bucket" {
-  source          = "./modules/gcs_bucket"
-  bucket_name     = var.gcs_bucket_dags
-  location        = var.region
-  project_id      = var.project_id
+  source      = "./modules/gcs_bucket"
+  bucket_name = var.gcs_bucket_dags
+  location    = var.region
+  project_id  = var.project_id
 }
 
 module "scripts_bucket" {
-  source         = "./modules/gcs_bucket"
-  bucket_name    = var.gcs_bucket_scripts
-  location       = var.region
-  project_id     = var.project_id
+  source      = "./modules/gcs_bucket"
+  bucket_name = var.gcs_bucket_scripts
+  location    = var.region
+  project_id  = var.project_id
 }
 
 module "artifacts_bucket" {
-  source         = "./modules/gcs_bucket"
-  bucket_name    = var.gcs_bucket_artifacts
-  location       = var.region
-  project_id     = var.project_id
+  source      = "./modules/gcs_bucket"
+  bucket_name = var.gcs_bucket_artifacts
+  location    = var.region
+  project_id  = var.project_id
 }
 
 
@@ -67,11 +67,11 @@ module "artifacts_bucket" {
 ###########
 
 module "sa_ops" {
-  source         = "./modules/iam/service_account"
-  project_id     = var.project_id
-  account_id     = "caec-ops-sa"
-  display_name   = "CAEC Operations Support Service Account"
-  iam_roles      = [
+  source       = "./modules/iam/service_account"
+  project_id   = var.project_id
+  account_id   = "caec-ops-sa"
+  display_name = "CAEC Operations Support Service Account"
+  iam_roles = [
     "roles/resourcemanager.projectIamAdmin",
     "roles/storage.admin",
     "roles/bigquery.admin",
@@ -90,7 +90,7 @@ module "sa_data_eng" {
   project_id   = var.project_id
   account_id   = "caec-data-eng-sa"
   display_name = "CAEC Data Engineer Service Account"
-  iam_roles    = [
+  iam_roles = [
     # BigQuery / Storage / Spark roles 
     "roles/bigquery.dataEditor",
     "roles/bigquery.jobUser",
@@ -117,7 +117,7 @@ module "sa_analyst" {
   project_id   = var.project_id
   account_id   = "caec-analyst-sa"
   display_name = "CAEC Data Analyst Service Account"
-  iam_roles    = [
+  iam_roles = [
     "roles/bigquery.dataViewer",
     "roles/storage.objectViewer"
   ]
@@ -197,22 +197,22 @@ resource "google_service_account_iam_member" "ops_can_act_as_data_eng" {
 }
 
 module "composer_env" {
-  source                = "./modules/composer_env"
-  project_id            = var.project_id
-  region                = var.region
-  env_name              = var.composer_env_name
-  dag_bucket            = var.gcs_bucket_dags
+  source                 = "./modules/composer_env"
+  project_id             = var.project_id
+  region                 = var.region
+  env_name               = var.composer_env_name
+  dag_bucket             = var.gcs_bucket_dags
   worker_service_account = module.sa_data_eng.email
 
-  image_version         = var.composer_image_version
+  image_version = var.composer_image_version
 
   env_variables = {
     CAEC_PROJECT_ID = var.project_id
     CAEC_REGION     = var.region
     CAEC_BUCKET     = var.gcs_bucket_data
     CAEC_SA_EMAIL   = module.sa_data_eng.email
-  } 
-  
+  }
+
   env_size = "ENVIRONMENT_SIZE_SMALL"
 
   depends_on = [module.enable_apis]
@@ -225,19 +225,19 @@ module "composer_env" {
 module "github_wif" {
   source     = "./modules/wif_github"
   project_id = var.project_id
-  repo       = var.github_repo  
+  repo       = var.github_repo
 }
 
 # Allow GitHub tokens to impersonate the Ops SA  (terraform jobs)
 resource "google_service_account_iam_member" "github_impersonate_ops" {
   service_account_id = module.sa_ops.name
-  role   = "roles/iam.workloadIdentityUser"
-  member = "principalSet://iam.googleapis.com/projects/${var.project_number}/locations/global/workloadIdentityPools/github-pool-v2/attribute.repository/${var.github_repo}"
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/projects/${var.project_number}/locations/global/workloadIdentityPools/github-pool-v2/attribute.repository/${var.github_repo}"
 }
 
 # Allow GitHub tokens to impersonate the Data-Eng SA  (build / run)
 resource "google_service_account_iam_member" "github_impersonate_data_eng" {
   service_account_id = module.sa_data_eng.name
-  role   = "roles/iam.workloadIdentityUser"
-  member = "principalSet://iam.googleapis.com/projects/${var.project_number}/locations/global/workloadIdentityPools/github-pool-v2/attribute.repository/${var.github_repo}"
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/projects/${var.project_number}/locations/global/workloadIdentityPools/github-pool-v2/attribute.repository/${var.github_repo}"
 }
