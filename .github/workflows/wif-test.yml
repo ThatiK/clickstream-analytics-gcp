@@ -21,9 +21,9 @@ jobs:
         run:  gcloud auth list
 
       - name: List CAEC scripts bucket
-        run:  gsutil ls -b gs://caec-prod-scripts
+        run:  gsutil ls -b gs://caec-scripts
 
       - name: Touch & delete an object
         run: |
-          echo "hello WIF" | gsutil cp - gs://caec-prod-scripts/tmp/wif-test.txt
-          gsutil rm gs://caec-prod-scripts/tmp/wif-test.txt
+          echo "hello WIF" | gsutil cp - gs://caec-scripts/tmp/wif-test.txt
+          gsutil rm gs://caec-scripts/tmp/wif-test.txt
