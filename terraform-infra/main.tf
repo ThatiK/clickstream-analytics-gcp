@@ -80,7 +80,8 @@ module "sa_ops" {
     "roles/artifactregistry.admin",
     "roles/compute.networkAdmin",
     "roles/serviceusage.serviceUsageAdmin",
-    "roles/iam.serviceAccountUser"
+    "roles/iam.serviceAccountUser",
+    "roles/iam.workloadIdentityPoolAdmin"
   ]
 }
 
@@ -215,4 +216,28 @@ module "composer_env" {
   env_size = "ENVIRONMENT_SIZE_SMALL"
 
   depends_on = [module.enable_apis]
+}
+
+
+##################
+### GITHUB WIF ###
+##################
+module "github_wif" {
+  source     = "./modules/wif_github"
+  project_id = var.project_id
+  repo       = var.github_repo  
+}
+
+# Allow GitHub tokens to impersonate the Ops SA  (terraform jobs)
+resource "google_service_account_iam_member" "github_impersonate_ops" {
+  service_account_id = module.sa_ops.name
+  role   = "roles/iam.workloadIdentityUser"
+  member = "principalSet://iam.googleapis.com/projects/${var.project_number}/locations/global/workloadIdentityPools/github-pool-v2/attribute.repository/${var.github_repo}"
+}
+
+# Allow GitHub tokens to impersonate the Data-Eng SA  (build / run)
+resource "google_service_account_iam_member" "github_impersonate_data_eng" {
+  service_account_id = module.sa_data_eng.name
+  role   = "roles/iam.workloadIdentityUser"
+  member = "principalSet://iam.googleapis.com/projects/${var.project_number}/locations/global/workloadIdentityPools/github-pool-v2/attribute.repository/${var.github_repo}"
 }

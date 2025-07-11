@@ -39,3 +39,7 @@ variable "composer_image_version" {
 #variable "dataproc_cluster_name" {
 #  default = "caec-cluster"
 #}
+
+variable "github_repo" {
+  default = "ThatiK/clickstream-analytics-gcp" 
+}
