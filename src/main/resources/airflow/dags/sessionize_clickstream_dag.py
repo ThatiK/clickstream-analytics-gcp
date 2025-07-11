@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.models import Variable
@@ -5,10 +6,10 @@ from airflow.providers.google.cloud.operators.dataproc import DataprocCreateBatc
 from airflow.operators.dummy import DummyOperator
 
 # Airflow Variables 
-PROJECT_ID   = Variable.get("CAEC_PROJECT_ID")
-REGION       = Variable.get("CAEC_REGION")
-SCRIPTS_BKT  = Variable.get("CAEC_SCRIPTS_BUCKET")   
-ENV          = Variable.get("CAEC_ENV")              
+PROJECT_ID   = os.getenv("CAEC_PROJECT_ID")
+REGION       = os.getenv("CAEC_REGION")
+SCRIPTS_BKT  = os.getenv("CAEC_SCRIPTS_BUCKET")   
+ENV          = os.getenv("CAEC_ENV")              
 
 # GCS URIs 
 SPARK_MAIN   = f"gs://{SCRIPTS_BKT}/spark/sessionize.py"

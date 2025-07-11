@@ -1,18 +1,17 @@
+import os
 from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.models import Variable
-from airflow.providers.google.cloud.transfers.gcs_to_bigquery import (
-    GCSToBigQueryOperator,
-)
+from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQueryOperator
 from airflow.operators.dummy import DummyOperator
 
-# ── Airflow Variables ────────────────────────────────────────────
-PROJECT_ID      = Variable.get("CAEC_PROJECT_ID")
-REGION          = Variable.get("CAEC_REGION")
-SCRIPTS_BUCKET  = Variable.get("CAEC_SCRIPTS_BUCKET")         
-BQ_DATASET      = Variable.get("CAEC_BQ_DATASET", "caec_analytics")
-ENV             = Variable.get("CAEC_ENV")                    
+# Airflow Variables
+PROJECT_ID      = os.getenv("CAEC_PROJECT_ID")
+REGION          = os.getenv("CAEC_REGION")
+SCRIPTS_BUCKET  = os.getenv("CAEC_SCRIPTS_BUCKET")         
+BQ_DATASET      = os.getenv("CAEC_BQ_DATASET", "caec_analytics")
+ENV             = os.getenv("CAEC_ENV")                    
 
 
 GCS_SOURCE_URI  = f"gs://{SCRIPTS_BUCKET}/sessionized/events/event_date_part={{ ds_nodash }}/*.parquet"
