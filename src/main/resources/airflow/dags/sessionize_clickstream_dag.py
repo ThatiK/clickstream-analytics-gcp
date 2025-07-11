@@ -53,6 +53,15 @@ with DAG(
                     "--conf", f"{ENV}",                    
                 ],
             },
+            "runtime_config": {
+                "properties": {
+                    "spark.executor.instances": "2",
+                    "spark.executor.cores":     "2",
+                    "spark.driver.cores":       "1",
+                    "spark.executor.memory":    "4g",
+                    "spark.driver.memory":      "2g",
+                }
+            },
             "environment_config": {
                 "execution_config": {
                     "service_account": f"caec-data-eng-sa@{PROJECT_ID}.iam.gserviceaccount.com"
