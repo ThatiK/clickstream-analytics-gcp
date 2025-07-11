@@ -33,10 +33,19 @@ jobs:
       
       - uses: actions/checkout@v4
 
-      # ─── inject the tfvars from a secret ───
+      # inject the tfvars from a secret
       - name: Write prod.tfvars from secret
         run: |
-          echo "${{ secrets.GCP_TFVARS_B64 }}" | base64 -d > terraform-infra/prod.tfvars
+          echo "${{ secrets.GCP_TFVARS_B64 }}" | base64 -d > terraform-infra/prod.auto.tfvars
+      
+
+      - name: Confirm tfvars present
+        run: |
+          echo "=== tfvars sha256 ==="
+          sha256sum terraform-infra/prod.auto.tfvars
+          echo "--- first 5 lines (masked) ---"
+          head -n 5 terraform-infra/prod.auto.tfvars | sed 's/=.*/= ***** MASKED ***** /'
+        
 
       - name: Terraform fmt / validate / plan
         working-directory: terraform-infra
@@ -48,6 +57,6 @@ jobs:
 
       # auto-apply only on main
       - name: Terraform apply
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/master'
         working-directory: terraform-infra
         run: terraform apply -auto-approve -input=false tfplan
