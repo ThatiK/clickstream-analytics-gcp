@@ -33,6 +33,11 @@ jobs:
       
       - uses: actions/checkout@v4
 
+      # ─── inject the tfvars from a secret ───
+      - name: Write prod.tfvars from secret
+        run: |
+          echo "${{ secrets.GCP_TFVARS_B64 }}" | base64 -d > terraform-infra/prod.tfvars
+
       - name: Terraform fmt / validate / plan
         working-directory: terraform-infra
         run: |
