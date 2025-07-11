@@ -1,13 +1,13 @@
+
 name: WIF sanity-check
-on:
-  workflow_dispatch: {}          # runs only when you click “Run workflow” in Actions
+on: { workflow_dispatch: {} }
 
 jobs:
   auth:
-    uses: ./.github/workflows/_auth.yml       # the shared auth wrapper you built
+    uses: ./.github/workflows/_auth.yml
     with:
-      service_account: ${{ secrets.GCP_OPS_SA }}
-    secrets: inherit
+      service_account: "caec-ops-sa@eternal-channel-457606-h5.iam.gserviceaccount.com"
+    secrets: inherit      # forwards all repo secrets declared in _auth.yml
 
   smoke:
     needs: auth
@@ -16,10 +16,10 @@ jobs:
       - name: Show active account
         run:  gcloud auth list
 
-      - name: List buckets (should succeed)
-        run:  gsutil ls -b gs://${{ secrets.CAEC_SCRIPTS_BUCKET }}
+      - name: List CAEC scripts bucket
+        run:  gsutil ls -b gs://caec-prod-scripts
 
-      - name: Touch a temp object and delete it
+      - name: Touch & delete an object
         run: |
-          echo "hello WIF" | gsutil cp - gs://${{ secrets.CAEC_SCRIPTS_BUCKET }}/tmp/wif-test.txt
-          gsutil rm gs://${{ secrets.CAEC_SCRIPTS_BUCKET }}/tmp/wif-test.txt
+          echo "hello WIF" | gsutil cp - gs://caec-prod-scripts/tmp/wif-test.txt
+          gsutil rm gs://caec-prod-scripts/tmp/wif-test.txt
