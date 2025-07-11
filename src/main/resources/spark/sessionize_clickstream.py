@@ -66,6 +66,17 @@ def get_spark():
 
 if __name__ == '__main__':
     env = sys.argv[sys.argv.index("--conf") + 1] 
+
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(logging.Formatter("[%(asctime)s] (%(levelname)s) %(message)s"))
+    logger.addHandler(handler)
+
+    logger.info("ENV: {}".format(env))
+
+    spark = get_spark()
+
     props_path = SparkFiles.get(f"{env}.properties")
 
     config = configparser.ConfigParser()
@@ -75,17 +86,9 @@ if __name__ == '__main__':
     output_path = config.get("PATHS", "sessionized_events")
     session_gap = int(config.get("SETTINGS", "session_gap_minutes")) * 60
 
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(logging.Formatter("[%(asctime)s] (%(levelname)s) %(message)s"))
-    logger.addHandler(handler)
-
     logger.info("INPUT PATH: {}".format(input_path))
     logger.info("OUTPUT PATH: {}".format(output_path))
     logger.info("SESSION GAP IN SECONDS: {}".format(session_gap))
-
-    spark = get_spark()
 
     sessionize(input_path, output_path, session_gap)
 

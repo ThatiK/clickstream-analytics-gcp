@@ -45,6 +45,17 @@ def get_spark():
 
 if __name__ == '__main__':
     env = sys.argv[sys.argv.index("--conf") + 1] 
+    
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(logging.Formatter("[%(asctime)s] (%(levelname)s) %(message)s"))
+    logger.addHandler(handler)
+
+    logger.info("ENV: {}".format(env))
+
+    spark = get_spark()
+
     props_path = SparkFiles.get(f"{env}.properties")
 
     config = configparser.ConfigParser()
@@ -53,16 +64,8 @@ if __name__ == '__main__':
     input_path = config.get("PATHS", "raw_events")
     output_path = config.get("PATHS", "clean_events")
 
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(logging.Formatter("[%(asctime)s] (%(levelname)s) %(message)s"))
-    logger.addHandler(handler)
-
     logger.info("INPUT PATH: {}".format(input_path))
     logger.info("OUTPUT PATH: {}".format(output_path))
-
-    spark = get_spark()
 
     clean(input_path, output_path)
 
