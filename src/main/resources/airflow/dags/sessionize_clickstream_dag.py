@@ -62,6 +62,7 @@ with DAG(
                     "spark.driver.memory":      "10g",
                     "spark.driver.memoryOverhead":   "1024m",
                     "spark.executor.memoryOverhead": "1024m",
+                    "spark.dataproc.dynamicAllocation.executorAllocationRatio": "0.3"
                 }
             },
             "environment_config": {

@@ -14,7 +14,7 @@ BQ_DATASET      = os.getenv("CAEC_BQ_DATASET", "caec_analytics")
 ENV             = os.getenv("CAEC_ENV")                    
 
 
-GCS_SOURCE_URI  = f"gs://{SCRIPTS_BUCKET}/sessionized/events/event_date_part={{ ds_nodash }}/*.parquet"
+GCS_SOURCE_URI  = "gs://{SCRIPTS_BUCKET}/sessionized/events/event_date_part={{ ds_nodash }}/*.parquet"
 BQ_TABLE        = f"{PROJECT_ID}.{BQ_DATASET}.clickstream_sessions"
 
 def generate_timestamped_batch_name(base_name):
@@ -47,7 +47,7 @@ with DAG(
     load_to_bq = GCSToBigQueryOperator(
         task_id="gcs_to_bq",
         bucket=SCRIPTS_BUCKET,
-        source_objects=[f"sessionized/events/event_date_part={{ ds_nodash }}/*.parquet"],
+        source_objects=["sessionized/events/event_date_part={{ ds_nodash }}/*.parquet"],
         destination_project_dataset_table=BQ_TABLE,
         source_format="PARQUET",
         write_disposition="WRITE_TRUNCATE",          
