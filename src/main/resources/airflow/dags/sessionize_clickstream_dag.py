@@ -56,10 +56,10 @@ with DAG(
             "runtime_config": {
                 "properties": {
                     "spark.executor.instances": "2",
-                    "spark.executor.cores":     "2",
-                    "spark.driver.cores":       "1",
-                    "spark.executor.memory":    "4g",
-                    "spark.driver.memory":      "2g",
+                    "spark.executor.cores":     "4",
+                    "spark.driver.cores":       "4",
+                    "spark.executor.memory":    "10g",
+                    "spark.driver.memory":      "10g",
                     "spark.driver.memoryOverhead":   "1024m",
                     "spark.executor.memoryOverhead": "1024m",
                 }
