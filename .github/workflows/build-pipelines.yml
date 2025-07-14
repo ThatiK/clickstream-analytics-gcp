@@ -56,7 +56,7 @@ jobs:
 
       - name: Generate DBT Documentation
         run: |
-          dbt docs generate --project-dir src/main/resources/dbt --profiles-dir src/main/resources/dbt/profiles
+          dbt docs generate --project-dir src/main/resources/dbt/caec --profiles-dir src/main/resources/dbt/profiles
 
       - name: Upload DBT Documentation to GCS
         run: |
