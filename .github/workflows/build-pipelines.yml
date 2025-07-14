@@ -61,9 +61,16 @@ jobs:
         run: |
           dbt docs generate --project-dir src/main/resources/dbt/caec --profiles-dir src/main/resources/dbt/profiles
 
+      - name: Check if DBT target directory exists
+        run: |
+          if [ ! -d "src/main/resources/dbt/target/" ]; then
+            echo "Error: DBT target directory does not exist."
+            exit 1
+          fi
+
       - name: Upload DBT Documentation to GCS
         run: |
-          gsutil -m rsync -r src/main/resources/dbt/target/ gs://${{ secrets.GCP_SCRIPTS_BUCKET }}/dbt-docs
+          gsutil -m rsync -r src/main/resources/dbt/target/ gs://${{ secrets.GCP_SCRIPTS_BUCKET }}/dbt-docs/
 
       - name: Upload Spark & Python scripts
         run: |
