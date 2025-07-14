@@ -55,6 +55,9 @@ jobs:
           pip install dbt-bigquery==1.9.0
 
       - name: Generate DBT Documentation
+        env:
+          CAEC_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          CAEC_REGION: ${{ secrets.GCP_REGION }}
         run: |
           dbt docs generate --project-dir src/main/resources/dbt/caec --profiles-dir src/main/resources/dbt/profiles
 
