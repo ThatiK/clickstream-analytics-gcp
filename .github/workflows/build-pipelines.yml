@@ -30,7 +30,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
-          service_account:           ${{ secrets.GCP_DATAENG_SA }}
+          service_account:           "caec-data-eng-sa%40eternal-channel-457606-h5.iam.gserviceaccount.com"
 
       - uses: google-github-actions/setup-gcloud@v2
         with:
