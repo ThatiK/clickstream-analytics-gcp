@@ -1,4 +1,4 @@
-name: Build & Push pipeline image + Upload scripts
+name: Build & Push pipeline image + Upload scripts + Generate DBT Docs
 on:
   push:
     branches: [ "master" ]
@@ -6,7 +6,9 @@ on:
       - "src/main/resources/python/**"
       - "src/main/resources/spark/**"
       - "src/main/resources/etc/**"
+      - "src/main/resources/dbt/**"
       - ".github/workflows/build-pipeline.yml"
+      - "Dockerfile"
   workflow_dispatch: {}
 
 permissions:
@@ -36,19 +38,25 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      #- id: build
-      #  uses: google-github-actions/build@v0
-      #  with:
-      #    project_id: ${{ secrets.GCP_PROJECT_ID }}
-      #    substitutions: _IMAGE_TAG=${{ github.sha }}
-      #    images: ${{ secrets.GCP_ARTIFACT_REPO }}/caec-events-processor:${{ github.sha }}
-
-      - name: Show repo tree
+      - name: Build Docker image
         run: |
-          echo "::group::tree"
-          tree -L 3 src || true
-          echo "::endgroup::"
+          docker build -f docker/dbt/Dockerfile -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/caec-docker/dbt-bigquery:latest .
 
+      - name: Push Docker image
+        run: |
+          docker push us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/caec-docker/dbt-bigquery:latest
+
+      - name: Install DBT
+        run: |
+          pip install dbt-bigquery==1.9.0
+
+      - name: Generate DBT Documentation
+        run: |
+          dbt docs generate --project-dir src/main/resources/dbt --profiles-dir src/main/resources/dbt/profiles
+
+      - name: Upload DBT Documentation to GCS
+        run: |
+          gsutil -m rsync -r src/main/resources/dbt/target/ gs://${{ secrets.GCP_SCRIPTS_BUCKET }}/dbt-docs
 
       - name: Upload Spark & Python scripts
         run: |
