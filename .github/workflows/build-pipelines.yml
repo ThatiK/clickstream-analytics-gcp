@@ -26,32 +26,17 @@ jobs:
       packages: write
 
     steps:
+      - uses: actions/checkout@v4
+
       - id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
-          service_account:           "caec-data-eng-sa%40eternal-channel-457606-h5.iam.gserviceaccount.com"
+          service_account:           ${{ secrets.GCP_DATAENG_SA }}
 
       - uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-
-      - name: Show active account
-        run: |
-          echo "::add-mask::$(gcloud auth list)"
-          gcloud auth list
-  
-      - name: Debug secrets
-        run: |
-          echo "Workload Identity Provider: ${{ secrets.GCP_WIF_PROVIDER }}"
-          echo "Service Account: ${{ secrets.GCP_DATAENG_SA }}"
-          echo "Project ID: ${{ secrets.GCP_PROJECT_ID }}"
-  
-      - name: Show authenticated service account
-        run: |
-          gcloud config get-value account
-
-      - uses: actions/checkout@v4
+          project_id: ${{ secrets.GCP_PROJECT_ID }}     
 
       - name: Build Docker image
         run: |
