@@ -17,7 +17,7 @@ caec_bigquery:
   outputs:
     dev:
       type: bigquery
-      method: application-default   #service-account
+      method: oauth   #service-account
       project: "{{ env_var('CAEC_PROJECT_ID') }}"
       dataset: caec
       location: "{{ env_var('CAEC_REGION')}}"
