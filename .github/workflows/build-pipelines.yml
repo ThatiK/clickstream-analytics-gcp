@@ -30,11 +30,14 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
-          service_account:           ${{ secrets.GCP_OPS_SA }}
+          service_account:           ${{ secrets.GCP_DATAENG_SA }}
 
       - uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Show active account
+        run: gcloud auth list
 
       - uses: actions/checkout@v4
 
