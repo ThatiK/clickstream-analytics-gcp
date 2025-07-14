@@ -36,8 +36,9 @@ jobs:
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      - name: Show active account
-        run: gcloud auth list
+      - name: Show authenticated service account
+        run: |
+          gcloud config get-value account
 
       - uses: actions/checkout@v4
 
