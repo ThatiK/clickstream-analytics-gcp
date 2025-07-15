@@ -28,4 +28,4 @@ jobs:
 
       - name: Rsync DAGs
         run: |
-          gsutil -m rsync -r src/main/resources/airflow/dags  gs://${{ secrets.GCP_COMPOSER_BUCKET }}
+          gsutil -m rsync -r src/main/resources/airflow/dags/  gs://${{ secrets.GCP_COMPOSER_BUCKET }}/dags
