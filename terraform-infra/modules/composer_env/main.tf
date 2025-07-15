@@ -15,6 +15,10 @@ resource "google_composer_environment" "composer" {
       image_version = var.image_version
       #airflow_config_overrides = var.airflow_config_overrides
       env_variables = var.env_variables
+
+      pypi_packages = {
+        "apache-airflow-providers-cncf-kubernetes" = ">=10.4.2" 
+      }
     }
   }
 

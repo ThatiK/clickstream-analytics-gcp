@@ -102,6 +102,7 @@ module "sa_data_eng" {
     # Composer-specific runtime roles
     "roles/composer.worker",
     "roles/artifactregistry.reader",
+    "roles/artifactregistry.writer",
     "roles/logging.logWriter",
     "roles/monitoring.metricWriter",
     "roles/cloudtrace.agent",
