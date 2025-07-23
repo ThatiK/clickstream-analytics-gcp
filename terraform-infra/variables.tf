@@ -28,7 +28,9 @@ variable "repository_id" {
   default = "caec-docker"
 }
 
-variable "composer_env" {}
+variable "composer_env" {
+  default = "prod"
+}
 
 variable "composer_env_name" {
   default = "caec-airflow"
