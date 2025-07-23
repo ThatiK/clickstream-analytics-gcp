@@ -1,6 +1,6 @@
 import os
 from airflow import DAG
-from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import KubernetesPodOperator
+from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
 from datetime import datetime
 from airflow.operators.dummy import DummyOperator
 
@@ -26,18 +26,26 @@ with DAG(
     run_dbt = KubernetesPodOperator(
         task_id='run_dbt',
         name='dbt-run',
-        namespace='default',
+        #namespace='default',
+        namespace="composer-user-workloads",
         image=f'us-central1-docker.pkg.dev/{PROJECT_ID}/caec-docker/dbt-bigquery:latest',
         cmds=["/bin/bash", "-c"],
         arguments=[
             """
-            dbt run --project-dir /usr/app/dbt --profile caec_bigquery
+            dbt run --project-dir /usr/app/dbt/caec --profile caec_bigquery
             """
         ],
         env_vars={
             'CAEC_PROJECT_ID': PROJECT_ID,
             'CAEC_REGION': REGION
         },
+        #service_account_name="airflow-gke-pod-sa",  
+        #executor_config = {
+        #    "KubernetesExecutor": {
+        #        "serviceAccountName": "airflow-gke-pod-sa"
+        #    }
+        #},
+
         is_delete_operator_pod=True,
     )
 

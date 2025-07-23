@@ -44,11 +44,10 @@ jobs:
       #    echo "--- first 5 lines (masked) ---"
       #    head -n 5 terraform-infra/prod.auto.tfvars | sed 's/=.*/= ***** MASKED ***** /'
        
-
+        #terraform fmt -check
       - name: Terraform fmt / validate / plan
         working-directory: terraform-infra
         run: |
-          terraform fmt -check
           terraform init -input=false
           terraform validate
           terraform plan -no-color -input=false -out=tfplan

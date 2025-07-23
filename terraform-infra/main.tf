@@ -1,7 +1,7 @@
 provider "google" {
-  project = var.project_id
-  region  = var.region
-  #credentials = file("${path.module}/../keys/caec-ops-sa.json")
+  project     = var.project_id
+  region      = var.region
+  credentials = file("${path.module}/../keys/caec-ops-sa.json")
 }
 
 ###################
@@ -81,7 +81,10 @@ module "sa_ops" {
     "roles/compute.networkAdmin",
     "roles/serviceusage.serviceUsageAdmin",
     "roles/iam.serviceAccountUser",
-    "roles/iam.workloadIdentityPoolAdmin"
+    "roles/iam.workloadIdentityPoolAdmin",
+    "roles/container.viewer",
+    "roles/container.admin",
+    "roles/iam.serviceAccountAdmin",
   ]
 }
 
@@ -109,7 +112,8 @@ module "sa_data_eng" {
 
     # GKE node roles ──
     "roles/container.defaultNodeServiceAccount",
-    "roles/container.nodeServiceAccount"
+    "roles/container.nodeServiceAccount",
+    "roles/container.viewer"
   ]
 }
 
@@ -221,6 +225,14 @@ module "composer_env" {
   depends_on = [module.enable_apis]
 }
 
+#locals {
+#  composer_namespace = module.composer_env.gke_namespace
+#}
+#
+#output "gke_namespace" {
+#  description = "The GKE namespace created by the Composer environment"
+#  value       = local.composer_namespace
+#}
 
 ##################
 ### GITHUB WIF ###
@@ -243,4 +255,31 @@ resource "google_service_account_iam_member" "github_impersonate_data_eng" {
   service_account_id = module.sa_data_eng.name
   role               = "roles/iam.workloadIdentityUser"
   member             = "principalSet://iam.googleapis.com/projects/${var.project_number}/locations/global/workloadIdentityPools/github-pool-v2/attribute.repository/${var.github_repo}"
+}
+
+
+#########################################
+##  Kubernetes Service Account + RBAC ###
+#########################################
+
+module "kubernetes_rbac" {
+  source = "./modules/ksa/kubernetes_rbac"
+
+  role_name               = "default-sa-full-pod-access"
+  api_groups              = [""]
+  resources               = ["pods", "pods/log"]
+  verbs                   = ["get", "list", "watch", "create", "delete", "update", "patch"]
+  role_binding_name       = "default-sa-cluster-reader-binding"
+  service_account_name    = "default"
+  service_account_namespace = "composer-2-13-7-airflow-2-9-3-5cfba5c4"
+}
+
+
+module "wi_binding_default_ksa" {
+  source         = "./modules/iam/workload_identity_binding"
+  iam_sa_name    = module.sa_data_eng.name
+  iam_sa_email   = module.sa_data_eng.email
+  project_id    = var.project_id
+  ksa_name       = "default"              
+  ksa_namespace  = "composer-2-13-7-airflow-2-9-3-5cfba5c4"
 }

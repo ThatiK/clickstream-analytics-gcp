@@ -17,9 +17,23 @@ resource "google_composer_environment" "composer" {
       env_variables = var.env_variables
 
       pypi_packages = {
-        "apache-airflow-providers-cncf-kubernetes" = ">=10.4.2" 
+        "apache-airflow-providers-cncf-kubernetes" = ">=10.4.2"
       }
     }
   }
 
+}
+
+#output "gke_namespace" {
+#  value = google_composer_environment.composer.config.0.software_config.0.pypi_packages["composer-namespace"]
+#}
+
+resource "null_resource" "composer_namespace" {
+  provisioner "local-exec" {
+    command = <<EOT
+      kubectl get ns -o json | jq -r '.items[].metadata.name' | grep ^composer-
+    EOT
+  }
+
+  depends_on = [google_composer_environment.composer]
 }
