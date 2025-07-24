@@ -28,12 +28,16 @@ variable "repository_id" {
   default = "caec-docker"
 }
 
+variable "composer_env" {
+  default = "prod"
+}
+
 variable "composer_env_name" {
   default = "caec-airflow"
 }
 
 variable "composer_image_version" {
-  default = "composer-2.13.6-airflow-2.9.3"
+  default = "composer-2.13.7-airflow-2.9.3"
 }
 
 #variable "dataproc_cluster_name" {
@@ -41,5 +45,5 @@ variable "composer_image_version" {
 #}
 
 variable "github_repo" {
-  default = "ThatiK/clickstream-analytics-gcp" 
+  default = "ThatiK/clickstream-analytics-gcp"
 }

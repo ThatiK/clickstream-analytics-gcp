@@ -1,8 +1,9 @@
 import sys
 import logging
 import time
-import argparse
+import configparser
 
+from pyspark import SparkFiles
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, unix_timestamp, lag, sum as _sum, concat_ws
@@ -64,15 +65,7 @@ def get_spark():
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--input-path', required=True)
-    parser.add_argument('--output-path', required=True)
-    parser.add_argument('--session-gap', required=True)
-    args = parser.parse_args()
-
-    input_path = args.input_path
-    output_path = args.output_path
-    session_gap = int(args.session_gap) * 60 # in seconds
+    env = sys.argv[sys.argv.index("--conf") + 1] 
 
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
@@ -80,11 +73,22 @@ if __name__ == '__main__':
     handler.setFormatter(logging.Formatter("[%(asctime)s] (%(levelname)s) %(message)s"))
     logger.addHandler(handler)
 
+    logger.info("ENV: {}".format(env))
+
+    spark = get_spark()
+
+    props_path = SparkFiles.get(f"{env}.properties")
+
+    config = configparser.ConfigParser()
+    config.read(props_path)
+
+    input_path = config.get("PATHS", "clean_events")
+    output_path = config.get("PATHS", "sessionized_events")
+    session_gap = int(config.get("SETTINGS", "session_gap_minutes")) * 60
+
     logger.info("INPUT PATH: {}".format(input_path))
     logger.info("OUTPUT PATH: {}".format(output_path))
     logger.info("SESSION GAP IN SECONDS: {}".format(session_gap))
-
-    spark = get_spark()
 
     sessionize(input_path, output_path, session_gap)
 

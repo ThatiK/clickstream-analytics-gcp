@@ -38,8 +38,9 @@ dbt_profiles.yml
 .DS_Store
 
 # Random
-commands.txt
+COMMANDS.md
 keys/
+local/
 
 # Jupyter Notebooks
 .ipynb_checkpoints/

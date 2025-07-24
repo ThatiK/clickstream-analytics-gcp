@@ -1,4 +1,4 @@
-name: Build & Push pipeline image + Upload scripts
+name: Build & Push pipeline image + Upload scripts + Generate DBT Docs
 on:
   push:
     branches: [ "master" ]
@@ -6,7 +6,9 @@ on:
       - "src/main/resources/python/**"
       - "src/main/resources/spark/**"
       - "src/main/resources/etc/**"
+      - "src/main/resources/dbt/**"
       - ".github/workflows/build-pipeline.yml"
+      - "Dockerfile"
   workflow_dispatch: {}
 
 permissions:
@@ -24,26 +26,54 @@ jobs:
       packages: write
 
     steps:
+      - uses: actions/checkout@v4
+
       - id: auth
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
-          service_account:           ${{ secrets.GCP_OPS_SA }}
+          service_account:           ${{ secrets.GCP_DATAENG_SA }}
 
       - uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}     
 
-      - uses: actions/checkout@v4
+      - name: Authenticate Docker to GCR
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev
 
-      - id: build
-        uses: google-github-actions/build@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          substitutions: _IMAGE_TAG=${{ github.sha }}
-          images: ${{ secrets.GCP_ARTIFACT_REPO }}/crawler:${{ github.sha }}
+      - name: Build Docker image
+        run: |
+          docker build -f docker/dbt/Dockerfile -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/caec-docker/dbt-bigquery:latest .
+
+      - name: Push Docker image
+        run: |
+          docker push us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/caec-docker/dbt-bigquery:latest
+
+      - name: Install DBT
+        run: |
+          pip install dbt-bigquery==1.9.0
+
+      - name: Generate DBT Documentation
+        env:
+          CAEC_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+          CAEC_REGION: ${{ secrets.GCP_REGION }}
+        run: |
+          dbt docs generate --project-dir src/main/resources/dbt/caec --profiles-dir src/main/resources/dbt/profiles
+
+      - name: Check if DBT target directory exists
+        run: |
+          if [ ! -d "src/main/resources/dbt/caec/target/" ]; then
+            echo "Error: DBT target directory does not exist."
+            exit 1
+          fi
+
+      - name: Upload DBT Documentation to GCS
+        run: |
+          gsutil -m rsync -r src/main/resources/dbt/caec/target/ gs://${{ secrets.GCP_SCRIPTS_BUCKET }}/dbt-docs/
 
       - name: Upload Spark & Python scripts
         run: |
-          gsutil -m rsync -r src/main/resources/spark   gs://${{ secrets.GCP_SCRIPTS_BUCKET }}/spark
-          gsutil -m rsync -r src/main/resources/python  gs://${{ secrets.GCP_SCRIPTS_BUCKET }}/python
+          gsutil -m rsync -r src/main/resources/spark/   gs://${{ secrets.GCP_SCRIPTS_BUCKET }}/spark
+          gsutil -m rsync -r src/main/resources/python/  gs://${{ secrets.GCP_SCRIPTS_BUCKET }}/python
+          gsutil -m rsync -r src/main/resources/etc/  gs://${{ secrets.GCP_SCRIPTS_BUCKET }}/etc

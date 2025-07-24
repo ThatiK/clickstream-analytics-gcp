@@ -1,0 +1,22 @@
+# filepath: /Users/karthik/Documents/work/tech/code/portfolio/clickstream-analytics-gcp/docker/dbt/.dockerignore
+
+# Ignore hidden files and directories
+.*
+!.env  # Allow specific hidden files if needed (e.g., .env)
+
+# Ignore unnecessary system files
+.DS_Store
+Thumbs.db
+
+# Ignore Git-related files
+.git
+.gitignore
+
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+
+logs/
+COMMANDS.md
+target/

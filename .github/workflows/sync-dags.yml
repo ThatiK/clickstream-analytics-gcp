@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v4
+
       - id: auth
         uses: google-github-actions/auth@v2
         with:
@@ -24,8 +26,6 @@ jobs:
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      - uses: actions/checkout@v4
-
       - name: Rsync DAGs
         run: |
-          gsutil -m rsync -r src/main/resources/airflow  gs://${{ secrets.GCP_COMPOSER_BUCKET }}
+          gsutil -m rsync -r src/main/resources/airflow/dags/  gs://${{ secrets.GCP_COMPOSER_BUCKET }}/dags

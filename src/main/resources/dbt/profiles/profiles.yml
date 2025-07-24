@@ -17,9 +17,9 @@ caec_bigquery:
   outputs:
     dev:
       type: bigquery
-      method: service-account
+      method: oauth   #service-account
       project: "{{ env_var('CAEC_PROJECT_ID') }}"
       dataset: caec
       location: "{{ env_var('CAEC_REGION')}}"
       threads: 4
-      keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS')}}"
+      #keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS')}}"

@@ -1,7 +1,8 @@
 import sys
 import logging
-import argparse
+import configparser
 
+from pyspark import SparkFiles
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, to_timestamp, lower, substring_index
@@ -43,24 +44,28 @@ def get_spark():
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--input-path', required=True)
-    parser.add_argument('--output-path', required=True)
-    args = parser.parse_args()
-
-    input_path = args.input_path
-    output_path = args.output_path
-
+    env = sys.argv[sys.argv.index("--conf") + 1] 
+    
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.INFO)
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(logging.Formatter("[%(asctime)s] (%(levelname)s) %(message)s"))
     logger.addHandler(handler)
 
-    logger.info("INPUT PATH: {}".format(input_path))
-    logger.info("OUTPUT PATH: {}".format(output_path))
+    logger.info("ENV: {}".format(env))
 
     spark = get_spark()
+
+    props_path = SparkFiles.get(f"{env}.properties")
+
+    config = configparser.ConfigParser()
+    config.read(props_path)
+
+    input_path = config.get("PATHS", "raw_events")
+    output_path = config.get("PATHS", "clean_events")
+
+    logger.info("INPUT PATH: {}".format(input_path))
+    logger.info("OUTPUT PATH: {}".format(output_path))
 
     clean(input_path, output_path)
 
