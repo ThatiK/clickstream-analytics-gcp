@@ -1,10 +1,10 @@
 name: Terraform — CAEC infra
 on:
-  pull_request:
-    paths: [ "terraform-infra/**" ]
-  push:
-    branches: [ "master" ]
-    paths:   [ "terraform-infra/**" ]
+  #pull_request:
+  #  paths: [ "terraform-infra/**" ]
+  #push:
+  #  branches: [ "master" ]
+  #  paths:   [ "terraform-infra/**" ]
   workflow_dispatch: {}
 
 permissions:
