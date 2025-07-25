@@ -1,3 +1,4 @@
+CREATE OR REPLACE VIEW `caec_insights.kpi_dropoff_funnel` AS
 SELECT
   stage,
   COUNT(DISTINCT session_id) AS sessions

@@ -146,8 +146,8 @@ module "bq_staging" {
 
 module "bq_warehouse" {
   source      = "./modules/bigquery_dataset"
-  dataset_id  = "caec_warehouse"
-  description = "Fact and dimension models"
+  dataset_id  = "caec_insights"
+  description = "Final dashboard tables and KPI outputs for CAEC Insights"
   labels = {
     layer = "warehouse"
     owner = "data-engineering"
@@ -157,7 +157,7 @@ module "bq_warehouse" {
 module "bq_marts" {
   source      = "./modules/bigquery_dataset"
   dataset_id  = "caec_analytics"
-  description = "Reporting marts"
+  description = "Fact and dimension models"
   labels = {
     layer = "marts"
     owner = "data-engineering"
