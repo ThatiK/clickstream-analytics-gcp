@@ -123,11 +123,15 @@ module "sa_analyst" {
   account_id   = "caec-analyst-sa"
   display_name = "CAEC Data Analyst Service Account"
   iam_roles = [
-    "roles/bigquery.dataViewer",
-    "roles/storage.objectViewer"
+    "roles/bigquery.jobUser"
   ]
 }
 
+resource "google_bigquery_dataset_iam_member" "analyst_read_insights" {
+  dataset_id = module.bq_warehouse.dataset_id
+  role       = "roles/bigquery.dataViewer"
+  member     = "serviceAccount:${module.sa_analyst.email}"
+}
 
 
 #################
@@ -164,6 +168,31 @@ module "bq_marts" {
   }
 }
 
+variable "authorized_views" {
+  type = list(string)
+  default = [
+    "kpi_event_volume_by_type",
+    "kpi_funnel_summary",
+    "kpi_dropoff_funnel",
+    "kpi_sessions_by_signup_cohort",
+    "kpi_top_products_named",
+    "kpi_top_products",
+    "event_type_lookup",
+    "kpi_daily_sessions",
+    "kpi_conversion_rate"
+  ]
+}
+
+resource "google_bigquery_dataset_access" "authorized_views" {
+  for_each  = toset(var.authorized_views)
+  dataset_id = module.bq_marts.dataset_id
+
+  view {
+    project_id = var.project_id
+    dataset_id = module.bq_warehouse.dataset_id
+    table_id   = each.key
+  }
+}
 
 ###################
 ### ARTIFACTORY ###
@@ -271,7 +300,7 @@ module "kubernetes_rbac" {
   verbs                   = ["get", "list", "watch", "create", "delete", "update", "patch"]
   role_binding_name       = "default-sa-cluster-reader-binding"
   service_account_name    = "default"
-  service_account_namespace = "composer-2-13-7-airflow-2-9-3-5cfba5c4"
+  service_account_namespace = "composer-2-13-7-airflow-2-9-3-5cfba5c4" ## TODO
 }
 
 
@@ -281,5 +310,5 @@ module "wi_binding_default_ksa" {
   iam_sa_email   = module.sa_data_eng.email
   project_id    = var.project_id
   ksa_name       = "default"              
-  ksa_namespace  = "composer-2-13-7-airflow-2-9-3-5cfba5c4"
+  ksa_namespace  = "composer-2-13-7-airflow-2-9-3-5cfba5c4" ## TODO
 }
