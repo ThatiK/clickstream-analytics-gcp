@@ -33,9 +33,9 @@ deployments run from GitHub Actions using Workload Identity Federation—no l
 
 This project was fully managed using [Plane](https://app.plane.so/data-engineering-lab/projects/ccac21e9-0819-4691-b9fe-6df5ef4a0060/issues), an open-source project and issue tracking tool.
 
-![Plane Modules](docs/plane/plane_modules_thumb.png)
+![Plane Modules](docs/plane/plane_modules.png)
 
-![Plane Board](docs/plane/plane_board_thumb.png)
+![Plane Board](docs/plane/plane_board.png)
 
 ## Key Features
 - **Serverless‑first data plane**: Dataproc Serverless + Cloud Composer.  
