@@ -1,48 +1,49 @@
-# KPI Definitions – CAEC Analytics
+# KPI Definitions – CAEC Insights Module
 
-This folder contains SQL logic for key performance indicators (KPIs) derived from the curated CAEC dataset (`caec_analytics`). These KPIs are designed to support business insights and visualization use cases.
+This folder contains BigQuery SQL definitions for key performance indicators (KPIs) used to analyze user behavior in the CAEC clickstream dataset. These views power the Looker Studio dashboard available in the project root.
 
-## Dataset Source
-All KPIs are generated using the following tables provided by the data engineering team:
-- `caec_analytics.fct_events`
-- `caec_analytics.fct_sessions`
-- `caec_analytics.dim_users`
+## Source Datasets
 
-## KPIs Included
+All KPIs are derived from the curated `caec_analytics` dataset, which includes:
+- `fct_events`: raw event-level interactions (e.g., view, add-to-cart, transaction)
+- `fct_sessions`: session-level metadata (e.g., start/end time)
+- `dim_users`: user-level identifiers
 
-### 1. Conversion Rate (`conversion_rate.sql`)
-Calculates the ratio of sessions that led to at least one purchase event.
+## Defined KPI Views
 
-**Formula**:  
-`Conversion Rate = Sessions with purchase / Total sessions`
+### `kpi_conversion_rate`
+Calculates the percentage of sessions that included a purchase.
 
-**Use Case**: Understand overall user behavior and session quality.
+### `kpi_top_products`
+Lists the top 10 products based on number of transactions (`item_id` only).
 
----
+### `kpi_top_products_named`
+Maps top `item_id`s to mock-friendly product names (e.g., "Wireless Mouse").
 
-### 2. Top Products (`top_products.sql`)
-Identifies the top 10 products based on the number of purchases (by `itemid`).
+### `kpi_dropoff_funnel`
+Counts how many sessions reached each funnel stage (view, cart, purchase).
 
-**Formula**:  
-`Top Products = itemid with highest count of 'purchase' events`
+### `kpi_funnel_summary`
+Same funnel logic but joined with `event_type_lookup` for display name support.
 
-**Note**: Since product names are not available in the source dataset, itemids are used as identifiers. Static labels may be added for presentation purposes.
+### `event_type_lookup`
+Lookup table mapping raw event types to friendly labels used across the dashboard.
 
-**Use Case**: Determine which products are most frequently purchased.
+### `kpi_event_volume_by_type`
+Daily count of each event type (e.g., views, carts, transactions) for trend analysis.
 
----
+### `kpi_sessions_by_signup_cohort`
+Trends of session activity over time, grouped by signup month (first session).
 
-### 3. Drop-off Points (`dropoffs.sql`)
-Breaks down the number of sessions reaching each funnel stage: view, add-to-cart, and purchase.
+## Where These Are Used
 
-**Stages**:
-- View → Add to Cart → Purchase
+These views directly support visualizations in the final dashboard:
+[`docs/looker/CAEC_Dashboard.pdf`](../../../../../docs/looker/CAEC_Dashboard.pdf)
 
-**Use Case**: Identify where users disengage in the purchase funnel.
-
----
+The dashboard was built in Looker Studio, connected only to `caec_insights` views to ensure clean governance and separation from raw data.
 
 ## Notes
-- All queries are intended to run in BigQuery.
-- These queries can be used directly for visualization in Looker Studio.
-- Static mappings or friendly labels may be added later for demo dashboards.
+
+- All SQL is BigQuery Standard SQL.
+- View names are prefixed with `caec_insights.` for semantic separation.
+- The dashboard uses friendly names (`display_name`) instead of raw codes wherever applicable.
